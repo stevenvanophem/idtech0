@@ -72,18 +72,18 @@ public final class WL_MAIN {
             virtualreality = false;
         }
 
-        MM_Startup();
+        ID_MM.MM_Startup();
         SignonScreen();
 
-        VW_Startup();
-        IN_Startup();
-        PM_Startup();
-        PM_UnlockMainMem();
-        SD_Startup();
-        CA_Startup();
-        US_Startup();
+        ID_VW.VW_Startup();
+        ID_IN.IN_Startup();
+        ID_PM.PM_Startup();
+        ID_PM.PM_UnlockMainMem();
+        ID_SD.SD_Startup();
+        ID_CA.CA_Startup();
+        ID_US.US_Startup();
 
-        // TODO: Port low-memory check and ERRORSCREEN failure path.
+        // TODO: Port low-memory check and ERRORSCREEN failure path from WL_MAIN.C.
 
         InitDigiMap();
         InitLookupTablesAndUpdateBlocks();
@@ -120,6 +120,17 @@ public final class WL_MAIN {
 
     public static void DemoLoop() {
         throw new UnsupportedOperationException("TODO: Port DemoLoop from WL_MAIN.C");
+    }
+
+    // Correlates to: original/WOLFSRC/WL_MAIN.C:557 (void ShutdownId(void))
+    public static void ShutdownId() {
+        ID_US.US_Shutdown();
+        ID_SD.SD_Shutdown();
+        ID_PM.PM_Shutdown();
+        ID_IN.IN_Shutdown();
+        ID_VW.VW_Shutdown();
+        ID_CA.CA_Shutdown();
+        ID_MM.MM_Shutdown();
     }
 
     public static void Quit(String error) {
@@ -188,31 +199,7 @@ public final class WL_MAIN {
         return false;
     }
 
-    private static void MM_Startup() {
-    }
-
     private static void SignonScreen() {
-    }
-
-    private static void VW_Startup() {
-    }
-
-    private static void IN_Startup() {
-    }
-
-    private static void PM_Startup() {
-    }
-
-    private static void PM_UnlockMainMem() {
-    }
-
-    private static void SD_Startup() {
-    }
-
-    private static void CA_Startup() {
-    }
-
-    private static void US_Startup() {
     }
 
     private static void InitDigiMap() {
