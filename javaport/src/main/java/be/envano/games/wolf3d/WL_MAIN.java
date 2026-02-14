@@ -16,6 +16,7 @@ public final class WL_MAIN {
     private static int viewsize = 15;
     private static int displayofs;
     private static int bufferofs;
+    private static long mminfo_mainmem = 640000L;
 
     private WL_MAIN() {
     }
@@ -45,7 +46,7 @@ public final class WL_MAIN {
         int i;
 
         for (i = 1; i < _argc; i++) {
-            if (US_CheckParm(_argv[i], JHParmStrings) == 0) {
+            if (ID_US.US_CheckParm(_argv[i], JHParmStrings) == 0) {
                 IsA386 = false;
                 return;
             }
@@ -83,7 +84,13 @@ public final class WL_MAIN {
         ID_CA.CA_Startup();
         ID_US.US_Startup();
 
-        // TODO: Port low-memory check and ERRORSCREEN failure path from WL_MAIN.C.
+        // Correlates to WL_MAIN.C non-SPEAR low-memory branch.
+        if (mminfo_mainmem < 235000L) {
+            // TODO: Port ERRORSCREEN cache/blit path.
+            ShutdownId();
+            Quit("Not enough memory");
+            return;
+        }
 
         InitDigiMap();
         InitLookupTablesAndUpdateBlocks();
@@ -145,21 +152,6 @@ public final class WL_MAIN {
         _argc = _argv.length;
     }
 
-    private static int US_CheckParm(String parm, String[] strings) {
-        String normalizedParm = skipNonAlpha(parm);
-        int i;
-        for (i = 0; i < strings.length; i++) {
-            String s = strings[i];
-            if (s == null || s.isEmpty()) {
-                break;
-            }
-            if (startsWithIgnoreCase(normalizedParm, s)) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
     private static String skipNonAlpha(String value) {
         if (value == null) {
             return "";
@@ -169,13 +161,6 @@ public final class WL_MAIN {
             idx++;
         }
         return value.substring(idx);
-    }
-
-    private static boolean startsWithIgnoreCase(String source, String prefix) {
-        if (source.length() < prefix.length()) {
-            return false;
-        }
-        return source.regionMatches(true, 0, prefix, 0, prefix.length());
     }
 
     private static boolean CheckIs386() {
