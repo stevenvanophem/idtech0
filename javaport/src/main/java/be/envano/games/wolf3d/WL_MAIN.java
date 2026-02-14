@@ -3,10 +3,19 @@ package be.envano.games.wolf3d;
 public final class WL_MAIN {
 
     private static final String[] JHParmStrings = {"no386", ""};
+    private static final int SC_M = 50;
+    private static final int STARTFONT = 1;
+    private static final int PAGE1START = 0;
+    private static final int PAGE2START = 0;
 
     private static int _argc;
     private static String[] _argv = new String[0];
     private static boolean IsA386;
+    private static boolean virtualreality;
+    private static boolean NoWait;
+    private static int viewsize = 15;
+    private static int displayofs;
+    private static int bufferofs;
 
     private WL_MAIN() {
     }
@@ -22,7 +31,16 @@ public final class WL_MAIN {
         Quit("Demo loop exited???");
     }
 
-    // Correlates to: original/WOLFSRC/WL_MAIN.C:241 (void Patch386(void))
+    /**
+     * Correlates to {@code original/WOLFSRC/WL_MAIN.C:241} ({@code void Patch386(void)}).
+     * <p>
+     * Historical purpose: on DOS-era x86 systems, detect 386-class CPUs and patch a division
+     * routine to use faster 32-bit instructions.
+     * <p>
+     * Porting note: this is hardware-era optimization logic (not core game behavior). In the
+     * Java port, preserve call flow and flags for fidelity; low-level runtime patching is expected
+     * to become a no-op or platform-layer stub.
+     */
     public static void Patch386() {
         int i;
 
@@ -41,8 +59,63 @@ public final class WL_MAIN {
         }
     }
 
+    /**
+     * Correlates to {@code original/WOLFSRC/WL_MAIN.C:1145} ({@code void InitGame(void)}).
+     * <p>
+     * This is startup scaffolding with strict call ordering. Unported dependencies are stubbed
+     * and will be replaced module-by-module.
+     */
     public static void InitGame() {
-        // TODO: Port from WL_MAIN.C and linked init modules.
+        if (MS_CheckParm("virtual")) {
+            virtualreality = true;
+        } else {
+            virtualreality = false;
+        }
+
+        MM_Startup();
+        SignonScreen();
+
+        VW_Startup();
+        IN_Startup();
+        PM_Startup();
+        PM_UnlockMainMem();
+        SD_Startup();
+        CA_Startup();
+        US_Startup();
+
+        // TODO: Port low-memory check and ERRORSCREEN failure path.
+
+        InitDigiMap();
+        InitLookupTablesAndUpdateBlocks();
+        ReadConfig();
+
+        if (Keyboard(SC_M)) {
+            DoJukebox();
+        } else if (!virtualreality) {
+            IntroScreen();
+        }
+
+        CA_CacheGrChunk(STARTFONT);
+        MM_SetLock();
+
+        LoadLatchMem();
+        BuildTables();
+        SetupWalls();
+
+        NewViewSize(viewsize);
+
+        InitRedShifts();
+        if (!virtualreality) {
+            FinishSignon();
+        }
+
+        displayofs = PAGE1START;
+        bufferofs = PAGE2START;
+
+        if (virtualreality) {
+            NoWait = true;
+            VR_Interrupt();
+        }
     }
 
     public static void DemoLoop() {
@@ -101,5 +174,91 @@ public final class WL_MAIN {
 
     private static void jabhack2() {
         // TODO: Port/replace assembly optimization hook.
+    }
+
+    // Correlates to: original/WOLFSRC/WL_MAIN.C:814 (boolean MS_CheckParm(char far *check))
+    private static boolean MS_CheckParm(String check) {
+        int i;
+        for (i = 1; i < _argc; i++) {
+            String parm = skipNonAlpha(_argv[i]);
+            if (check.equalsIgnoreCase(parm)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static void MM_Startup() {
+    }
+
+    private static void SignonScreen() {
+    }
+
+    private static void VW_Startup() {
+    }
+
+    private static void IN_Startup() {
+    }
+
+    private static void PM_Startup() {
+    }
+
+    private static void PM_UnlockMainMem() {
+    }
+
+    private static void SD_Startup() {
+    }
+
+    private static void CA_Startup() {
+    }
+
+    private static void US_Startup() {
+    }
+
+    private static void InitDigiMap() {
+    }
+
+    private static void InitLookupTablesAndUpdateBlocks() {
+        // TODO: Port nearmapylookup/farmapylookup/uwidthtable/blockstarts setup.
+    }
+
+    private static void ReadConfig() {
+    }
+
+    private static boolean Keyboard(int scancode) {
+        return false;
+    }
+
+    private static void DoJukebox() {
+    }
+
+    private static void IntroScreen() {
+    }
+
+    private static void CA_CacheGrChunk(int chunk) {
+    }
+
+    private static void MM_SetLock() {
+    }
+
+    private static void LoadLatchMem() {
+    }
+
+    private static void BuildTables() {
+    }
+
+    private static void SetupWalls() {
+    }
+
+    private static void NewViewSize(int size) {
+    }
+
+    private static void InitRedShifts() {
+    }
+
+    private static void FinishSignon() {
+    }
+
+    private static void VR_Interrupt() {
     }
 }
