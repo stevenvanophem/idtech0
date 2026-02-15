@@ -425,6 +425,51 @@ public final class ID_VL {
     }
 
     /**
+     * Correlates to {@code original/WOLFSRC/ID_VL.C:692} ({@code void VL_Bar (int x, int y, int width, int height, int color)}).
+     */
+    public static void VL_Bar(int x, int y, int width, int height, int color) {
+        int dest;
+        int leftmask;
+        int rightmask;
+        int midbytes;
+        int linedelta;
+
+        leftmask = leftmasks[x & 3] & 0xff;
+        rightmask = rightmasks[(x + width - 1) & 3] & 0xff;
+        midbytes = ((x + width + 3) >> 2) - (x >> 2) - 2;
+        linedelta = linewidth - (midbytes + 1);
+
+        dest = bufferofs + ylookup[y] + (x >> 2);
+
+        if (midbytes < 0) {
+            ID_VL_H.VGAMAPMASK(leftmask & rightmask);
+            while (height-- != 0) {
+                ASM_RUNTIME.WRITE_VIDEO_BYTE(screenseg, dest, color);
+                dest += linewidth;
+            }
+            ID_VL_H.VGAMAPMASK(15);
+            return;
+        }
+
+        while (height-- != 0) {
+            ID_VL_H.VGAMAPMASK(leftmask);
+            ASM_RUNTIME.WRITE_VIDEO_BYTE(screenseg, dest, color);
+            dest++;
+
+            ID_VL_H.VGAMAPMASK(15);
+            ASM_RUNTIME.FILL_VIDEO_BYTES(screenseg, dest, color, midbytes);
+            dest += midbytes;
+
+            ID_VL_H.VGAMAPMASK(rightmask);
+            ASM_RUNTIME.WRITE_VIDEO_BYTE(screenseg, dest, color);
+
+            dest += linedelta;
+        }
+
+        ID_VL_H.VGAMAPMASK(15);
+    }
+
+    /**
      * Correlates to {@code original/WOLFSRC/ID_VL_A.ASM:30} ({@code PROC VL_WaitVBL num:WORD}).
      */
     public static void VL_WaitVBL(int vbls) {
