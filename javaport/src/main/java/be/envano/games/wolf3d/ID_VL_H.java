@@ -8,6 +8,8 @@ public final class ID_VL_H {
     public static final int CRTC_INDEX = 0x3D4;
     public static final int CRTC_OVERFLOW = 7;
     public static final int CRTC_MAXSCANLINE = 9;
+    public static final int CRTC_STARTHIGH = 12;
+    public static final int CRTC_STARTLOW = 13;
     public static final int CRTC_OFFSET = 19;
     public static final int CRTC_UNDERLINE = 20;
     public static final int CRTC_MODE = 23;
@@ -15,6 +17,8 @@ public final class ID_VL_H {
     public static final int GC_INDEX = 0x3CE;
     public static final int GC_MODE = 5;
     public static final int GC_MISCELLANEOUS = 6;
+    public static final int ATR_INDEX = 0x3C0;
+    public static final int ATR_PELPAN = 19;
     public static final int PEL_WRITE_ADR = 0x3C8;
     public static final int PEL_READ_ADR = 0x3C7;
     public static final int PEL_DATA = 0x3C9;

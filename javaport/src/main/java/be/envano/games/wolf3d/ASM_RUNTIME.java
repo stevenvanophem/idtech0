@@ -36,6 +36,20 @@ public final class ASM_RUNTIME {
     }
 
     /**
+     * Assembly intent bridge for {@code pushf}.
+     */
+    public static void PUSHF() {
+        // TODO: Track flags stack when backend requires it.
+    }
+
+    /**
+     * Assembly intent bridge for {@code popf}.
+     */
+    public static void POPF() {
+        // TODO: Track flags stack when backend requires it.
+    }
+
+    /**
      * Assembly intent bridge for {@code mov ax,<value>}.
      */
     public static void MOV_AX(int value) {
@@ -76,6 +90,14 @@ public final class ASM_RUNTIME {
     }
 
     /**
+     * Assembly intent bridge for {@code mov bl,<value>}.
+     */
+    public static void MOV_BL(int value) {
+        BL = value & 0xff;
+        BX = (BH << 8) | BL;
+    }
+
+    /**
      * Assembly intent bridge for {@code mov ah,al}.
      */
     public static void MOV_AH_AL() {
@@ -95,6 +117,46 @@ public final class ASM_RUNTIME {
      */
     public static void MOV_CX(int value) {
         CX = value & 0xffff;
+    }
+
+    public static int AX() {
+        return AX & 0xffff;
+    }
+
+    public static int BX() {
+        return BX & 0xffff;
+    }
+
+    public static int CX() {
+        return CX & 0xffff;
+    }
+
+    public static int DX() {
+        return DX & 0xffff;
+    }
+
+    public static int AL() {
+        return AL & 0xff;
+    }
+
+    public static int AH() {
+        return AH & 0xff;
+    }
+
+    public static int BL() {
+        return BL & 0xff;
+    }
+
+    public static int BH() {
+        return BH & 0xff;
+    }
+
+    public static int CL() {
+        return CX & 0xff;
+    }
+
+    public static int CH() {
+        return (CX >> 8) & 0xff;
     }
 
     /**

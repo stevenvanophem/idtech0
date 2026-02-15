@@ -32,7 +32,7 @@ public final class ID_VL {
 
         ASM_RUNTIME.CLD();
 
-        videocard = VL_VideoID();
+        videocard = ID_VL_A.VL_VideoID();
         for (i = 1; i < C_RUNTIME.argc(); i++) {
             if (ID_US.US_CheckParm(C_RUNTIME.argv(i), ParmStrings) == 0) {
                 videocard = 5;
@@ -70,11 +70,6 @@ public final class ID_VL {
     public static void VL_SetTextMode() {
         ASM_RUNTIME.MOV_AX(0x03);
         ASM_RUNTIME.INT(0x10);
-    }
-
-    private static int VL_VideoID() {
-        // TODO: Port real video-card detection behavior.
-        return 5;
     }
 
     /**
@@ -164,6 +159,10 @@ public final class ID_VL {
         }
     }
 
+    static int GetLineWidthForAsm() {
+        return linewidth;
+    }
+
     /**
      * Correlates to {@code original/WOLFSRC/ID_VL.C:277} ({@code void VL_SetSplitScreen (int linenum)}).
      */
@@ -177,6 +176,20 @@ public final class ID_VL {
         ASM_RUNTIME.OUTPORTB(ID_VL_H.CRTC_INDEX, ID_VL_H.CRTC_MAXSCANLINE);
         ASM_RUNTIME.OUTPORTB(ID_VL_H.CRTC_INDEX + 1,
                 ASM_RUNTIME.INPORTB(ID_VL_H.CRTC_INDEX + 1) & (255 - 64));
+    }
+
+    /**
+     * Correlates to {@code original/WOLFSRC/ID_VL_A.ASM:67} ({@code PROC VL_SetCRTC crtc:WORD}).
+     */
+    public static void VL_SetCRTC(int crtc) {
+        ID_VL_A.VL_SetCRTC(crtc);
+    }
+
+    /**
+     * Correlates to {@code original/WOLFSRC/ID_VL_A.ASM:121} ({@code PROC VL_SetScreen crtc:WORD, pel:WORD}).
+     */
+    public static void VL_SetScreen(int crtc, int pel) {
+        ID_VL_A.VL_SetScreen(crtc, pel);
     }
 
     /**
@@ -585,34 +598,11 @@ public final class ID_VL {
     }
 
     /**
-     * Correlates to {@code original/WOLFSRC/ID_VL.C:909} ({@code void VL_ScreenToScreen (unsigned source, unsigned dest,int width, int height)}).
-     * <p>
-     * Note: this routine appears in a {@code #if 0} block in the original source.
+     * Correlates to {@code original/WOLFSRC/ID_VL_A.ASM:237}
+     * ({@code PROC VL_ScreenToScreen source:WORD, dest:WORD, wide:WORD, height:WORD}).
      */
     public static void VL_ScreenToScreen(int source, int dest, int width, int height) {
-        int linedelta;
-        int row;
-        int src;
-        int dst;
-
-        ID_VL_H.VGAWRITEMODE(1);
-        ID_VL_H.VGAMAPMASK(15);
-
-        src = source;
-        dst = dest;
-        linedelta = linewidth - width;
-        for (row = 0; row < height; row++) {
-            ASM_RUNTIME.COPY_VIDEO_TO_VIDEO(screenseg, src, dst, width);
-            src += width;
-            src += linedelta;
-            dst += width;
-            dst += linedelta;
-        }
-
-        ASM_RUNTIME.MOV_AX_SS();
-        ASM_RUNTIME.MOV_DS_AX();
-
-        ID_VL_H.VGAWRITEMODE(0);
+        ID_VL_A.VL_ScreenToScreen(source, dest, width, height);
     }
 
     /**
@@ -721,16 +711,6 @@ public final class ID_VL {
      * Correlates to {@code original/WOLFSRC/ID_VL_A.ASM:30} ({@code PROC VL_WaitVBL num:WORD}).
      */
     public static void VL_WaitVBL(int vbls) {
-        while (vbls != 0) {
-            while ((ASM_RUNTIME.INPORTB(ID_VL_H.STATUS_REGISTER_1) & 8) != 0) {
-                // Wait for non-sync.
-            }
-
-            while ((ASM_RUNTIME.INPORTB(ID_VL_H.STATUS_REGISTER_1) & 8) == 0) {
-                // Wait for sync.
-            }
-
-            vbls--;
-        }
+        ID_VL_A.VL_WaitVBL(vbls);
     }
 }
