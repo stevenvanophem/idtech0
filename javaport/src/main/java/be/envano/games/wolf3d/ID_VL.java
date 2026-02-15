@@ -149,4 +149,36 @@ public final class ID_VL {
             offset += linewidth;
         }
     }
+
+    /**
+     * Correlates to {@code original/WOLFSRC/ID_VL.C:277} ({@code void VL_SetSplitScreen (int linenum)}).
+     */
+    public static void VL_SetSplitScreen(int linenum) {
+        VL_WaitVBL(1);
+        linenum = linenum * 2 - 1;
+        ASM_RUNTIME.OUTPORTB(ID_VL_H.CRTC_INDEX, ID_VL_H.CRTC_LINECOMPARE);
+        ASM_RUNTIME.OUTPORTB(ID_VL_H.CRTC_INDEX + 1, linenum % 256);
+        ASM_RUNTIME.OUTPORTB(ID_VL_H.CRTC_INDEX, ID_VL_H.CRTC_OVERFLOW);
+        ASM_RUNTIME.OUTPORTB(ID_VL_H.CRTC_INDEX + 1, 1 + 16 * (linenum / 256));
+        ASM_RUNTIME.OUTPORTB(ID_VL_H.CRTC_INDEX, ID_VL_H.CRTC_MAXSCANLINE);
+        ASM_RUNTIME.OUTPORTB(ID_VL_H.CRTC_INDEX + 1,
+                ASM_RUNTIME.INPORTB(ID_VL_H.CRTC_INDEX + 1) & (255 - 64));
+    }
+
+    /**
+     * Correlates to {@code original/WOLFSRC/ID_VL_A.ASM:30} ({@code PROC VL_WaitVBL num:WORD}).
+     */
+    public static void VL_WaitVBL(int vbls) {
+        while (vbls != 0) {
+            while ((ASM_RUNTIME.INPORTB(ID_VL_H.STATUS_REGISTER_1) & 8) != 0) {
+                // Wait for non-sync.
+            }
+
+            while ((ASM_RUNTIME.INPORTB(ID_VL_H.STATUS_REGISTER_1) & 8) == 0) {
+                // Wait for sync.
+            }
+
+            vbls--;
+        }
+    }
 }

@@ -6,13 +6,17 @@ public final class ID_VL_H {
     public static final int SC_MAPMASK = 2;
     public static final int SC_MEMMODE = 4;
     public static final int CRTC_INDEX = 0x3D4;
+    public static final int CRTC_OVERFLOW = 7;
+    public static final int CRTC_MAXSCANLINE = 9;
     public static final int CRTC_OFFSET = 19;
     public static final int CRTC_UNDERLINE = 20;
     public static final int CRTC_MODE = 23;
+    public static final int CRTC_LINECOMPARE = 24;
     public static final int GC_INDEX = 0x3CE;
     public static final int GC_MODE = 5;
     public static final int GC_MISCELLANEOUS = 6;
     public static final int SCREENSEG = 0xA000;
+    public static final int STATUS_REGISTER_1 = 0x3DA;
     public static final int MAXSCANLINES = 200;
 
     private ID_VL_H() {
