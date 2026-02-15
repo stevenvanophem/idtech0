@@ -47,6 +47,13 @@ public final class ASM_RUNTIME {
     }
 
     /**
+     * Assembly intent bridge for word output to an I/O port ({@code outport}).
+     */
+    public static void OUTPORT(int port, int value) {
+        // TODO: Replace with platform backend behavior where applicable.
+    }
+
+    /**
      * Assembly intent bridge for byte input from an I/O port ({@code inportb}).
      */
     public static int INPORTB(int port) {

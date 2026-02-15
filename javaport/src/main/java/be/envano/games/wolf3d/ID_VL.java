@@ -7,11 +7,15 @@ public final class ID_VL {
     private static final int SC_MAPMASK = 2;
     private static final int SC_MEMMODE = 4;
     private static final int CRTC_INDEX = 0x3D4;
+    private static final int CRTC_OFFSET = 19;
     private static final int CRTC_UNDERLINE = 20;
     private static final int CRTC_MODE = 23;
     private static final int GC_INDEX = 0x3CE;
     private static final int GC_MODE = 5;
     private static final int GC_MISCELLANEOUS = 6;
+    private static final int MAXSCANLINES = 200;
+    private static int linewidth;
+    private static final int[] ylookup = new int[MAXSCANLINES];
 
     private ID_VL() {
     }
@@ -122,6 +126,24 @@ public final class ID_VL {
     }
 
     private static void VL_SetLineWidth(int width) {
-        // TODO: Port line-width setup and lookup update.
+        int i;
+        int offset;
+
+        //
+        // set wide virtual screen
+        //
+        ASM_RUNTIME.OUTPORT(CRTC_INDEX, CRTC_OFFSET + width * 256);
+
+        //
+        // set up lookup tables
+        //
+        linewidth = width * 2;
+
+        offset = 0;
+
+        for (i = 0; i < MAXSCANLINES; i++) {
+            ylookup[i] = offset;
+            offset += linewidth;
+        }
     }
 }
