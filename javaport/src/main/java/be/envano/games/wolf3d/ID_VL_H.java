@@ -15,6 +15,9 @@ public final class ID_VL_H {
     public static final int GC_INDEX = 0x3CE;
     public static final int GC_MODE = 5;
     public static final int GC_MISCELLANEOUS = 6;
+    public static final int PEL_WRITE_ADR = 0x3C8;
+    public static final int PEL_READ_ADR = 0x3C7;
+    public static final int PEL_DATA = 0x3C9;
     public static final int SCREENSEG = 0xA000;
     public static final int STATUS_REGISTER_1 = 0x3DA;
     public static final int MAXSCANLINES = 200;

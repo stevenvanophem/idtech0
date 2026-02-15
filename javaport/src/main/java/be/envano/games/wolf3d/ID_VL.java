@@ -166,6 +166,30 @@ public final class ID_VL {
     }
 
     /**
+     * Correlates to {@code original/WOLFSRC/ID_VL.C:309} ({@code void VL_FillPalette (int red, int green, int blue)}).
+     */
+    public static void VL_FillPalette(int red, int green, int blue) {
+        int i;
+
+        ASM_RUNTIME.OUTPORTB(ID_VL_H.PEL_WRITE_ADR, 0);
+        for (i = 0; i < 256; i++) {
+            ASM_RUNTIME.OUTPORTB(ID_VL_H.PEL_DATA, red);
+            ASM_RUNTIME.OUTPORTB(ID_VL_H.PEL_DATA, green);
+            ASM_RUNTIME.OUTPORTB(ID_VL_H.PEL_DATA, blue);
+        }
+    }
+
+    /**
+     * Correlates to {@code original/WOLFSRC/ID_VL.C:332} ({@code void VL_SetColor (int color, int red, int green, int blue)}).
+     */
+    public static void VL_SetColor(int color, int red, int green, int blue) {
+        ASM_RUNTIME.OUTPORTB(ID_VL_H.PEL_WRITE_ADR, color);
+        ASM_RUNTIME.OUTPORTB(ID_VL_H.PEL_DATA, red);
+        ASM_RUNTIME.OUTPORTB(ID_VL_H.PEL_DATA, green);
+        ASM_RUNTIME.OUTPORTB(ID_VL_H.PEL_DATA, blue);
+    }
+
+    /**
      * Correlates to {@code original/WOLFSRC/ID_VL_A.ASM:30} ({@code PROC VL_WaitVBL num:WORD}).
      */
     public static void VL_WaitVBL(int vbls) {
