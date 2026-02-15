@@ -3,6 +3,12 @@ package be.envano.games.wolf3d;
 public final class ASM_RUNTIME {
 
     private static int AX;
+    private static int DX;
+    private static int AL;
+    private static int AH;
+    private static int ES;
+    private static int CX;
+    private static int DI;
 
     private ASM_RUNTIME() {
     }
@@ -12,6 +18,60 @@ public final class ASM_RUNTIME {
      */
     public static void MOV_AX(int value) {
         AX = value & 0xffff;
+        AL = AX & 0xff;
+        AH = (AX >> 8) & 0xff;
+    }
+
+    /**
+     * Assembly intent bridge for {@code mov dx,<value>}.
+     */
+    public static void MOV_DX(int value) {
+        DX = value & 0xffff;
+    }
+
+    /**
+     * Assembly intent bridge for {@code mov al,<value>}.
+     */
+    public static void MOV_AL(int value) {
+        AL = value & 0xff;
+        AX = (AH << 8) | AL;
+    }
+
+    /**
+     * Assembly intent bridge for {@code mov ah,<value>}.
+     */
+    public static void MOV_AH(int value) {
+        AH = value & 0xff;
+        AX = (AH << 8) | AL;
+    }
+
+    /**
+     * Assembly intent bridge for {@code mov ah,al}.
+     */
+    public static void MOV_AH_AL() {
+        AH = AL;
+        AX = (AH << 8) | AL;
+    }
+
+    /**
+     * Assembly intent bridge for {@code mov es,ax}.
+     */
+    public static void MOV_ES_AX() {
+        ES = AX & 0xffff;
+    }
+
+    /**
+     * Assembly intent bridge for {@code mov cx,<value>}.
+     */
+    public static void MOV_CX(int value) {
+        CX = value & 0xffff;
+    }
+
+    /**
+     * Assembly intent bridge for {@code xor di,di}.
+     */
+    public static void XOR_DI_DI() {
+        DI = 0;
     }
 
     /**
@@ -59,5 +119,50 @@ public final class ASM_RUNTIME {
     public static int INPORTB(int port) {
         // TODO: Replace with platform backend behavior where applicable.
         return 0;
+    }
+
+    /**
+     * Assembly intent bridge for {@code out dx,al}.
+     */
+    public static void OUT_DX_AL() {
+        OUTPORTB(DX, AL);
+    }
+
+    /**
+     * Assembly intent bridge for {@code out dx,ax}.
+     */
+    public static void OUT_DX_AX() {
+        OUTPORT(DX, AX);
+    }
+
+    /**
+     * Assembly intent bridge for {@code inc dx}.
+     */
+    public static void INC_DX() {
+        DX = (DX + 1) & 0xffff;
+    }
+
+    /**
+     * Assembly intent bridge for {@code in al,dx}.
+     */
+    public static void IN_AL_DX() {
+        AL = INPORTB(DX) & 0xff;
+        AX = (AH << 8) | AL;
+    }
+
+    /**
+     * Assembly intent bridge for {@code and al,<mask>}.
+     */
+    public static void AND_AL(int mask) {
+        AL = AL & (mask & 0xff);
+        AX = (AH << 8) | AL;
+    }
+
+    /**
+     * Assembly intent bridge for {@code rep stosw} using current register values.
+     */
+    public static void REP_STOSW() {
+        // TODO: Replace with platform backend behavior where applicable.
+        // Uses ES:DI destination, AX word value, CX word count.
     }
 }

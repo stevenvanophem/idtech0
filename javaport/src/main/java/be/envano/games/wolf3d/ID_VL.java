@@ -3,6 +3,7 @@ package be.envano.games.wolf3d;
 public final class ID_VL {
 
     private static final String[] ParmStrings = {"HIDDENCARD", ""};
+    private static final int SCREENSEG = 0xA000;
     private static final int SC_INDEX = 0x3C4;
     private static final int SC_MAPMASK = 2;
     private static final int SC_MEMMODE = 4;
@@ -118,7 +119,25 @@ public final class ID_VL {
     }
 
     private static void VL_ClearVideo(int color) {
-        // TODO: Port VL_ClearVideo body from ID_VL.C.
+        ASM_RUNTIME.MOV_DX(GC_INDEX);
+        ASM_RUNTIME.MOV_AL(GC_MODE);
+        ASM_RUNTIME.OUT_DX_AL();
+        ASM_RUNTIME.INC_DX();
+        ASM_RUNTIME.IN_AL_DX();
+        ASM_RUNTIME.AND_AL(0xfc);
+        ASM_RUNTIME.OUT_DX_AL();
+
+        ASM_RUNTIME.MOV_DX(SC_INDEX);
+        ASM_RUNTIME.MOV_AX(SC_MAPMASK + 15 * 256);
+        ASM_RUNTIME.OUT_DX_AX();
+
+        ASM_RUNTIME.MOV_AX(SCREENSEG);
+        ASM_RUNTIME.MOV_ES_AX();
+        ASM_RUNTIME.MOV_AL(color);
+        ASM_RUNTIME.MOV_AH_AL();
+        ASM_RUNTIME.MOV_CX(0x8000);
+        ASM_RUNTIME.XOR_DI_DI();
+        ASM_RUNTIME.REP_STOSW();
     }
 
     private static void VGAMAPMASK(int mask) {
