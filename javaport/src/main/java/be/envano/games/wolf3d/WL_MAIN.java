@@ -5,6 +5,13 @@ public final class WL_MAIN {
     private static final String[] JHParmStrings = {"no386", ""};
     private static final int SC_M = 50;
     private static final int STARTFONT = 1;
+    private static final int MAPSIZE = 64;
+    private static final int PORTTILESWIDE = 20;
+    private static final int PORTTILESHIGH = 13;
+    private static final int UPDATEWIDE = PORTTILESWIDE;
+    private static final int UPDATEHIGH = PORTTILESHIGH;
+    private static final int SCREENWIDTH = 80;
+    private static final int TILEWIDTH = 4;
     private static final int PAGE1START = 0;
     private static final int PAGE2START = 0;
 
@@ -17,6 +24,13 @@ public final class WL_MAIN {
     private static int displayofs;
     private static int bufferofs;
     private static long mminfo_mainmem = 640000L;
+    private static final int[] farmapylookup = new int[MAPSIZE];
+    private static final int[] nearmapylookup = new int[MAPSIZE];
+    private static final byte[] tilemap = new byte[MAPSIZE * MAPSIZE];
+    private static final int[] uwidthtable = new int[PORTTILESHIGH];
+    private static final int[] blockstarts = new int[UPDATEWIDE * UPDATEHIGH];
+    private static final byte[] update = new byte[UPDATEWIDE * UPDATEHIGH];
+    private static int updateptr;
 
     private WL_MAIN() {
     }
@@ -190,8 +204,43 @@ public final class WL_MAIN {
     private static void InitDigiMap() {
     }
 
+    /**
+     * Correlates to {@code original/WOLFSRC/WL_MAIN.C:1190-1204}.
+     * <p>
+     * Initializes precomputed lookup tables used by map addressing and screen update bookkeeping:
+     * - {@code nearmapylookup}: row offsets into the contiguous {@code tilemap} buffer
+     * - {@code farmapylookup}: row offsets used by map segment addressing
+     * - {@code uwidthtable}: row starts for the update region width
+     * - {@code blockstarts}: screen-space block origins used by the update system
+     * - {@code updateptr}: reset to the start of the update buffer
+     */
     private static void InitLookupTablesAndUpdateBlocks() {
-        // TODO: Port nearmapylookup/farmapylookup/uwidthtable/blockstarts setup.
+        int i;
+        int x;
+        int y;
+        int blockstartIndex;
+
+        // Correlates to WL_MAIN.C:1190-1193.
+        for (i = 0; i < MAPSIZE; i++) {
+            nearmapylookup[i] = MAPSIZE * i;
+            farmapylookup[i] = i * 64;
+        }
+
+        // Correlates to WL_MAIN.C:1196-1197.
+        for (i = 0; i < PORTTILESHIGH; i++) {
+            uwidthtable[i] = UPDATEWIDE * i;
+        }
+
+        // Correlates to WL_MAIN.C:1199-1202.
+        blockstartIndex = 0;
+        for (y = 0; y < UPDATEHIGH; y++) {
+            for (x = 0; x < UPDATEWIDE; x++) {
+                blockstarts[blockstartIndex++] = SCREENWIDTH * 16 * y + x * TILEWIDTH;
+            }
+        }
+
+        // Correlates to WL_MAIN.C:1204.
+        updateptr = 0;
     }
 
     private static void ReadConfig() {
