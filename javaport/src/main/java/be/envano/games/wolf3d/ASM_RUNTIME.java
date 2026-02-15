@@ -50,6 +50,13 @@ public final class ASM_RUNTIME {
     }
 
     /**
+     * Assembly intent bridge for short timing no-op used as {@code jmp $+2}.
+     */
+    public static void JMP_SHORT_2() {
+        // TODO: Keep as no-op unless backend timing simulation is introduced.
+    }
+
+    /**
      * Assembly intent bridge for {@code mov ax,<value>}.
      */
     public static void MOV_AX(int value) {

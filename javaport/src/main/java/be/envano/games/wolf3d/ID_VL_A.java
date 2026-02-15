@@ -110,24 +110,27 @@ public final class ID_VL_A {
     public static void VL_SetScreen(int crtc, int pel) {
         int cx;
         int al;
+        int dx;
 
         cx = (ID_SD.GetTimeCountWord() + 2) & 0xffff;
+        dx = ID_VL_H.STATUS_REGISTER_1;
 
-        while ((ASM_RUNTIME.INPORTB(ID_VL_H.STATUS_REGISTER_1) & 1) != 0) {
+        while ((ASM_RUNTIME.INPORTB(dx) & 1) != 0) {
             // waitdisplay
         }
 
         while (true) {
             ASM_RUNTIME.STI();
+            ASM_RUNTIME.JMP_SHORT_2();
             ASM_RUNTIME.CLI();
 
             if (UnsignedWordGte(ID_SD.GetTimeCountWord(), cx)) {
                 break;
             }
 
-            al = ASM_RUNTIME.INPORTB(ID_VL_H.STATUS_REGISTER_1);
+            al = ASM_RUNTIME.INPORTB(dx);
             if ((al & 8) != 0) {
-                while ((ASM_RUNTIME.INPORTB(ID_VL_H.STATUS_REGISTER_1) & 1) != 0) {
+                while ((ASM_RUNTIME.INPORTB(dx) & 1) != 0) {
                     // waitdisplay
                 }
                 continue;
@@ -136,9 +139,9 @@ public final class ID_VL_A {
                 continue;
             }
 
-            al = ASM_RUNTIME.INPORTB(ID_VL_H.STATUS_REGISTER_1);
+            al = ASM_RUNTIME.INPORTB(dx);
             if ((al & 8) != 0) {
-                while ((ASM_RUNTIME.INPORTB(ID_VL_H.STATUS_REGISTER_1) & 1) != 0) {
+                while ((ASM_RUNTIME.INPORTB(dx) & 1) != 0) {
                     // waitdisplay
                 }
                 continue;
@@ -147,9 +150,9 @@ public final class ID_VL_A {
                 continue;
             }
 
-            al = ASM_RUNTIME.INPORTB(ID_VL_H.STATUS_REGISTER_1);
+            al = ASM_RUNTIME.INPORTB(dx);
             if ((al & 8) != 0) {
-                while ((ASM_RUNTIME.INPORTB(ID_VL_H.STATUS_REGISTER_1) & 1) != 0) {
+                while ((ASM_RUNTIME.INPORTB(dx) & 1) != 0) {
                     // waitdisplay
                 }
                 continue;
@@ -158,9 +161,9 @@ public final class ID_VL_A {
                 continue;
             }
 
-            al = ASM_RUNTIME.INPORTB(ID_VL_H.STATUS_REGISTER_1);
+            al = ASM_RUNTIME.INPORTB(dx);
             if ((al & 8) != 0) {
-                while ((ASM_RUNTIME.INPORTB(ID_VL_H.STATUS_REGISTER_1) & 1) != 0) {
+                while ((ASM_RUNTIME.INPORTB(dx) & 1) != 0) {
                     // waitdisplay
                 }
                 continue;
@@ -169,9 +172,9 @@ public final class ID_VL_A {
                 continue;
             }
 
-            al = ASM_RUNTIME.INPORTB(ID_VL_H.STATUS_REGISTER_1);
+            al = ASM_RUNTIME.INPORTB(dx);
             if ((al & 8) != 0) {
-                while ((ASM_RUNTIME.INPORTB(ID_VL_H.STATUS_REGISTER_1) & 1) != 0) {
+                while ((ASM_RUNTIME.INPORTB(dx) & 1) != 0) {
                     // waitdisplay
                 }
                 continue;
@@ -189,6 +192,7 @@ public final class ID_VL_A {
         ASM_RUNTIME.OUTPORTB(ID_VL_H.CRTC_INDEX + 1, crtc & 0xff);
 
         ASM_RUNTIME.OUTPORTB(ID_VL_H.ATR_INDEX, ID_VL_H.ATR_PELPAN | 0x20);
+        ASM_RUNTIME.JMP_SHORT_2();
         ASM_RUNTIME.OUTPORTB(ID_VL_H.ATR_INDEX, pel & 0xff);
 
         ASM_RUNTIME.STI();
