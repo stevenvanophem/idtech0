@@ -14,6 +14,8 @@ public final class ID_VL {
         int i;
         int videocard;
 
+        ASM_RUNTIME.CLD();
+
         videocard = VL_VideoID();
         for (i = 1; i < C_RUNTIME.argc(); i++) {
             if (ID_US.US_CheckParm(C_RUNTIME.argv(i), ParmStrings) == 0) {
