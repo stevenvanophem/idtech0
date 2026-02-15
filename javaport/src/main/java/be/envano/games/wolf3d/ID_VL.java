@@ -35,12 +35,39 @@ public final class ID_VL {
         VL_SetTextMode();
     }
 
+    /**
+     * Correlates to {@code original/WOLFSRC/ID_VL.C:112} ({@code void VL_SetVGAPlaneMode(void)}).
+     */
+    public static void VL_SetVGAPlaneMode() {
+        ASM_RUNTIME.MOV_AX(0x13);
+        ASM_RUNTIME.INT_10h();
+        VL_DePlaneVGA();
+        VGAMAPMASK(15);
+        VL_SetLineWidth(40);
+    }
+
+    /**
+     * Correlates to {@code original/WOLFSRC/ID_VL.C:128} ({@code void VL_SetTextMode(void)}).
+     */
+    public static void VL_SetTextMode() {
+        ASM_RUNTIME.MOV_AX(0x03);
+        ASM_RUNTIME.INT_10h();
+    }
+
     private static int VL_VideoID() {
         // TODO: Port real video-card detection behavior.
         return 5;
     }
 
-    private static void VL_SetTextMode() {
-        // TODO: Port text mode switch behavior from VL_SetTextMode.
+    private static void VL_DePlaneVGA() {
+        // TODO: Port non-linear VGA plane setup from ID_VL.C.
+    }
+
+    private static void VGAMAPMASK(int mask) {
+        // TODO: Port VGA map-mask register write.
+    }
+
+    private static void VL_SetLineWidth(int width) {
+        // TODO: Port line-width setup and lookup update.
     }
 }
