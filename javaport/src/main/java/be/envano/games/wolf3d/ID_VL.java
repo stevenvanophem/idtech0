@@ -1,5 +1,12 @@
 package be.envano.games.wolf3d;
 
+import java.lang.foreign.Arena;
+import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.Linker;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.SymbolLookup;
+import java.lang.foreign.ValueLayout;
+import java.lang.invoke.MethodHandle;
 import java.util.Arrays;
 
 public final class ID_VL {
@@ -19,6 +26,16 @@ public final class ID_VL {
     private static final byte[] pixmasks = {1, 2, 4, 8};
     private static final byte[] leftmasks = {15, 14, 12, 8};
     private static final byte[] rightmasks = {1, 3, 7, 15};
+    private static boolean windowBootstrapAttempted;
+    private static boolean windowCreated;
+    private static long windowHandle;
+    private static MethodHandle getDCHandle;
+    private static MethodHandle releaseDCHandle;
+    private static MethodHandle stretchDIBitsHandle;
+    private static MethodHandle peekMessageWHandle;
+    private static MethodHandle translateMessageHandle;
+    private static MethodHandle dispatchMessageWHandle;
+    private static final byte[] currentPalette = new byte[256 * 3];
 
     private ID_VL() {
     }
@@ -57,6 +74,7 @@ public final class ID_VL {
      * Correlates to {@code original/WOLFSRC/ID_VL.C:112} ({@code void VL_SetVGAPlaneMode(void)}).
      */
     public static void VL_SetVGAPlaneMode() {
+        VL_CreateWindow();
         ASM_RUNTIME.MOV_AX(0x13);
         ASM_RUNTIME.INT(0x10);
         VL_DePlaneVGA();
@@ -170,6 +188,10 @@ public final class ID_VL {
         return linewidth;
     }
 
+    static long GetWindowHandleForPlatform() {
+        return windowHandle;
+    }
+
     /**
      * Correlates to {@code original/WOLFSRC/ID_VL.C:277} ({@code void VL_SetSplitScreen (int linenum)}).
      */
@@ -204,12 +226,18 @@ public final class ID_VL {
      */
     public static void VL_FillPalette(int red, int green, int blue) {
         int i;
+        int c;
 
         ASM_RUNTIME.OUTPORTB(ID_VL_H.PEL_WRITE_ADR, 0);
         for (i = 0; i < 256; i++) {
             ASM_RUNTIME.OUTPORTB(ID_VL_H.PEL_DATA, red);
             ASM_RUNTIME.OUTPORTB(ID_VL_H.PEL_DATA, green);
             ASM_RUNTIME.OUTPORTB(ID_VL_H.PEL_DATA, blue);
+        }
+        for (c = 0; c < 256; c++) {
+            currentPalette[c * 3] = (byte) red;
+            currentPalette[c * 3 + 1] = (byte) green;
+            currentPalette[c * 3 + 2] = (byte) blue;
         }
     }
 
@@ -221,6 +249,9 @@ public final class ID_VL {
         ASM_RUNTIME.OUTPORTB(ID_VL_H.PEL_DATA, red);
         ASM_RUNTIME.OUTPORTB(ID_VL_H.PEL_DATA, green);
         ASM_RUNTIME.OUTPORTB(ID_VL_H.PEL_DATA, blue);
+        currentPalette[color * 3] = (byte) red;
+        currentPalette[color * 3 + 1] = (byte) green;
+        currentPalette[color * 3 + 2] = (byte) blue;
     }
 
     /**
@@ -237,6 +268,8 @@ public final class ID_VL {
      * Correlates to {@code original/WOLFSRC/ID_VL.C:371} ({@code void VL_SetPalette (byte far *palette)}).
      */
     public static void VL_SetPalette(byte[] palette) {
+        int i;
+
         ASM_RUNTIME.MOV_DX(ID_VL_H.PEL_WRITE_ADR);
         ASM_RUNTIME.MOV_AL(0);
         ASM_RUNTIME.OUT_DX_AL();
@@ -261,6 +294,10 @@ public final class ID_VL {
 
         ASM_RUNTIME.MOV_AX_SS();
         ASM_RUNTIME.MOV_DS_AX();
+
+        for (i = 0; i < 768 && i < palette.length; i++) {
+            currentPalette[i] = palette[i];
+        }
     }
 
     /**
@@ -719,5 +756,306 @@ public final class ID_VL {
      */
     public static void VL_WaitVBL(int vbls) {
         ID_VL_A.VL_WaitVBL(vbls);
+    }
+
+    public static void VL_Present() {
+        final int WINDOW_WIDTH = 960;
+        final int WINDOW_HEIGHT = 600;
+        final int BI_RGB = 0;
+        final int DIB_RGB_COLORS = 0;
+        final int SRCCOPY = 0x00CC0020;
+        final int SCREEN_WIDTH = 320;
+        final int SCREEN_HEIGHT = 200;
+        final int SCREEN_STRIDE = 80;
+        int x;
+        int y;
+        int srcOffset;
+        int plane;
+        int paletteIndex;
+        int pr;
+        int pg;
+        int pb;
+        int color;
+        long pixelOffset;
+        MemorySegment hwnd;
+        MemorySegment hdc;
+
+        if (!windowCreated || stretchDIBitsHandle == null || getDCHandle == null || releaseDCHandle == null) {
+            return;
+        }
+        VL_PumpEvents();
+
+        try (Arena arena = Arena.ofConfined()) {
+            hwnd = MemorySegment.ofAddress(windowHandle);
+            hdc = (MemorySegment) getDCHandle.invoke(hwnd);
+            if (hdc == MemorySegment.NULL) {
+                return;
+            }
+
+            MemorySegment pixels = arena.allocate((long) SCREEN_WIDTH * SCREEN_HEIGHT * 4, 4);
+            MemorySegment bmi = arena.allocate(44, 4);
+
+            // BITMAPINFOHEADER
+            bmi.set(ValueLayout.JAVA_INT, 0, 40);
+            bmi.set(ValueLayout.JAVA_INT, 4, SCREEN_WIDTH);
+            bmi.set(ValueLayout.JAVA_INT, 8, -SCREEN_HEIGHT);
+            bmi.set(ValueLayout.JAVA_SHORT, 12, (short) 1);
+            bmi.set(ValueLayout.JAVA_SHORT, 14, (short) 32);
+            bmi.set(ValueLayout.JAVA_INT, 16, BI_RGB);
+            bmi.set(ValueLayout.JAVA_INT, 20, SCREEN_WIDTH * SCREEN_HEIGHT * 4);
+            bmi.set(ValueLayout.JAVA_INT, 24, 0);
+            bmi.set(ValueLayout.JAVA_INT, 28, 0);
+            bmi.set(ValueLayout.JAVA_INT, 32, 0);
+            bmi.set(ValueLayout.JAVA_INT, 36, 0);
+
+            pixelOffset = 0;
+            for (y = 0; y < SCREEN_HEIGHT; y++) {
+                for (x = 0; x < SCREEN_WIDTH; x++) {
+                    srcOffset = (displayofs + y * SCREEN_STRIDE + (x >> 2)) & 0xffff;
+                    plane = x & 3;
+                    paletteIndex = ASM_RUNTIME.DEBUG_READ_VRAM_PLANE_BYTE(plane, srcOffset) & 0xff;
+
+                    pr = (currentPalette[paletteIndex * 3] & 0xff) << 2;
+                    pg = (currentPalette[paletteIndex * 3 + 1] & 0xff) << 2;
+                    pb = (currentPalette[paletteIndex * 3 + 2] & 0xff) << 2;
+                    if (pr > 255) {
+                        pr = 255;
+                    }
+                    if (pg > 255) {
+                        pg = 255;
+                    }
+                    if (pb > 255) {
+                        pb = 255;
+                    }
+
+                    color = (pr << 16) | (pg << 8) | pb;
+                    pixels.set(ValueLayout.JAVA_INT, pixelOffset, color);
+                    pixelOffset += 4;
+                }
+            }
+
+            stretchDIBitsHandle.invoke(
+                    hdc,
+                    0, 0, WINDOW_WIDTH, WINDOW_HEIGHT,
+                    0, 0, SCREEN_WIDTH, SCREEN_HEIGHT,
+                    pixels,
+                    bmi,
+                    DIB_RGB_COLORS,
+                    SRCCOPY
+            );
+            releaseDCHandle.invoke(hwnd, hdc);
+        } catch (Throwable t) {
+            throw new IllegalStateException("Win32 present failed", t);
+        }
+    }
+
+    private static void VL_PumpEvents() {
+        final int PM_REMOVE = 0x0001;
+        final int WM_QUIT = 0x0012;
+        final long MSG_MESSAGE_OFFSET = 8L;
+        MemorySegment msg;
+        int hasMessage;
+        int message;
+
+        if (peekMessageWHandle == null || translateMessageHandle == null || dispatchMessageWHandle == null) {
+            return;
+        }
+
+        try (Arena arena = Arena.ofConfined()) {
+            msg = arena.allocate(48, 8);
+            while (true) {
+                hasMessage = (int) peekMessageWHandle.invoke(
+                        msg,
+                        MemorySegment.NULL,
+                        0,
+                        0,
+                        PM_REMOVE
+                );
+                if (hasMessage == 0) {
+                    break;
+                }
+
+                message = msg.get(ValueLayout.JAVA_INT, MSG_MESSAGE_OFFSET);
+                if (message == WM_QUIT) {
+                    windowCreated = false;
+                    break;
+                }
+
+                translateMessageHandle.invoke(msg);
+                dispatchMessageWHandle.invoke(msg);
+            }
+        } catch (Throwable t) {
+            throw new IllegalStateException("Win32 message pump failed", t);
+        }
+    }
+
+    private static void VL_CreateWindow() {
+        final int WS_OVERLAPPEDWINDOW = 0x00CF0000;
+        final int WS_VISIBLE = 0x10000000;
+        final int CW_USEDEFAULT = 0x80000000;
+        final int SW_SHOW = 5;
+        final int WINDOW_WIDTH = 960;
+        final int WINDOW_HEIGHT = 600;
+        String os;
+        Linker linker;
+        SymbolLookup user32;
+        SymbolLookup gdi32;
+        MethodHandle createWindowExW;
+        MethodHandle showWindow;
+        MethodHandle updateWindow;
+        MemorySegment hwnd;
+
+        if (windowBootstrapAttempted) {
+            return;
+        }
+        windowBootstrapAttempted = true;
+
+        os = System.getProperty("os.name", "");
+        if (!os.toLowerCase().contains("win")) {
+            return;
+        }
+
+        try (Arena arena = Arena.ofConfined()) {
+            linker = Linker.nativeLinker();
+            user32 = SymbolLookup.libraryLookup("user32", Arena.global());
+            gdi32 = SymbolLookup.libraryLookup("gdi32", Arena.global());
+
+            createWindowExW = linker.downcallHandle(
+                    user32.find("CreateWindowExW").orElseThrow(),
+                    FunctionDescriptor.of(
+                            ValueLayout.ADDRESS,
+                            ValueLayout.JAVA_INT,
+                            ValueLayout.ADDRESS,
+                            ValueLayout.ADDRESS,
+                            ValueLayout.JAVA_INT,
+                            ValueLayout.JAVA_INT,
+                            ValueLayout.JAVA_INT,
+                            ValueLayout.JAVA_INT,
+                            ValueLayout.JAVA_INT,
+                            ValueLayout.ADDRESS,
+                            ValueLayout.ADDRESS,
+                            ValueLayout.ADDRESS,
+                            ValueLayout.ADDRESS
+                    )
+            );
+            showWindow = linker.downcallHandle(
+                    user32.find("ShowWindow").orElseThrow(),
+                    FunctionDescriptor.of(
+                            ValueLayout.JAVA_INT,
+                            ValueLayout.ADDRESS,
+                            ValueLayout.JAVA_INT
+                    )
+            );
+            updateWindow = linker.downcallHandle(
+                    user32.find("UpdateWindow").orElseThrow(),
+                    FunctionDescriptor.of(
+                            ValueLayout.JAVA_INT,
+                            ValueLayout.ADDRESS
+                    )
+            );
+            getDCHandle = linker.downcallHandle(
+                    user32.find("GetDC").orElseThrow(),
+                    FunctionDescriptor.of(
+                            ValueLayout.ADDRESS,
+                            ValueLayout.ADDRESS
+                    )
+            );
+            releaseDCHandle = linker.downcallHandle(
+                    user32.find("ReleaseDC").orElseThrow(),
+                    FunctionDescriptor.of(
+                            ValueLayout.JAVA_INT,
+                            ValueLayout.ADDRESS,
+                            ValueLayout.ADDRESS
+                    )
+            );
+            peekMessageWHandle = linker.downcallHandle(
+                    user32.find("PeekMessageW").orElseThrow(),
+                    FunctionDescriptor.of(
+                            ValueLayout.JAVA_INT,
+                            ValueLayout.ADDRESS,
+                            ValueLayout.ADDRESS,
+                            ValueLayout.JAVA_INT,
+                            ValueLayout.JAVA_INT,
+                            ValueLayout.JAVA_INT
+                    )
+            );
+            translateMessageHandle = linker.downcallHandle(
+                    user32.find("TranslateMessage").orElseThrow(),
+                    FunctionDescriptor.of(
+                            ValueLayout.JAVA_INT,
+                            ValueLayout.ADDRESS
+                    )
+            );
+            dispatchMessageWHandle = linker.downcallHandle(
+                    user32.find("DispatchMessageW").orElseThrow(),
+                    FunctionDescriptor.of(
+                            ValueLayout.JAVA_LONG,
+                            ValueLayout.ADDRESS
+                    )
+            );
+            stretchDIBitsHandle = linker.downcallHandle(
+                    gdi32.find("StretchDIBits").orElseThrow(),
+                    FunctionDescriptor.of(
+                            ValueLayout.JAVA_INT,
+                            ValueLayout.ADDRESS,
+                            ValueLayout.JAVA_INT,
+                            ValueLayout.JAVA_INT,
+                            ValueLayout.JAVA_INT,
+                            ValueLayout.JAVA_INT,
+                            ValueLayout.JAVA_INT,
+                            ValueLayout.JAVA_INT,
+                            ValueLayout.JAVA_INT,
+                            ValueLayout.JAVA_INT,
+                            ValueLayout.ADDRESS,
+                            ValueLayout.ADDRESS,
+                            ValueLayout.JAVA_INT,
+                            ValueLayout.JAVA_INT
+                    )
+            );
+
+            hwnd = (MemorySegment) createWindowExW.invoke(
+                    0,
+                    AllocateWideString(arena, "STATIC"),
+                    AllocateWideString(arena, "Wolf3D"),
+                    WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                    CW_USEDEFAULT,
+                    CW_USEDEFAULT,
+                    WINDOW_WIDTH,
+                    WINDOW_HEIGHT,
+                    MemorySegment.NULL,
+                    MemorySegment.NULL,
+                    MemorySegment.NULL,
+                    MemorySegment.NULL
+            );
+            if (hwnd == MemorySegment.NULL) {
+                throw new IllegalStateException("CreateWindowExW failed");
+            }
+
+            showWindow.invoke(hwnd, SW_SHOW);
+            updateWindow.invoke(hwnd);
+            windowHandle = hwnd.address();
+            windowCreated = true;
+        } catch (Throwable t) {
+            throw new IllegalStateException("Win32 window bootstrap failed", t);
+        }
+
+        if (!windowCreated) {
+            throw new IllegalStateException("Win32 window bootstrap did not create a window");
+        }
+    }
+
+    private static MemorySegment AllocateWideString(Arena arena, String value) {
+        int i;
+        MemorySegment segment;
+
+        segment = arena.allocate(
+                (value.length() + 1L) * ValueLayout.JAVA_CHAR.byteSize(),
+                ValueLayout.JAVA_CHAR.byteAlignment()
+        );
+        for (i = 0; i < value.length(); i++) {
+            segment.set(ValueLayout.JAVA_CHAR, i * ValueLayout.JAVA_CHAR.byteSize(), value.charAt(i));
+        }
+        segment.set(ValueLayout.JAVA_CHAR, value.length() * ValueLayout.JAVA_CHAR.byteSize(), '\0');
+        return segment;
     }
 }

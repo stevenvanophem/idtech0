@@ -1,8 +1,5 @@
 package be.envano.games.wolf3d;
 
-import java.io.IOException;
-import java.nio.file.Paths;
-
 public final class WL_MAIN {
 
     private static final String[] JHParmStrings = {"no386", ""};
@@ -57,7 +54,6 @@ public final class WL_MAIN {
     private static int playstate;
     private static boolean tedlevel;
     private static int tedlevelnum;
-    private static boolean wroteFrame;
     // Correlates to original/WOLFSRC/ID_HEADS.H extern signon/introscn linkage.
     private static final byte[] introscn = new byte[320 * 200];
     // Correlates to original/WOLFSRC/ID_VH.H extern gamepal.
@@ -398,16 +394,7 @@ public final class WL_MAIN {
     }
 
     private static void VW_UpdateScreen() {
-        if (wroteFrame) {
-            return;
-        }
-        try {
-            ASM_RUNTIME.DEBUG_DUMP_MODEX_PPM(Paths.get("javaport", "target", "application-frame.ppm"),
-                    320, 200, 80, 0);
-            wroteFrame = true;
-        } catch (IOException ignored) {
-            // TODO: Route backend errors through existing debug/log path.
-        }
+        ID_VL.VL_Present();
     }
 
     private static boolean IN_UserInput(int delay) {
