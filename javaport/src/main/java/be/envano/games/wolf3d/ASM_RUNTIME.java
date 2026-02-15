@@ -7,8 +7,13 @@ public final class ASM_RUNTIME {
     private static int AL;
     private static int AH;
     private static int ES;
+    private static int DS;
+    private static int SS;
     private static int CX;
     private static int DI;
+    private static int SI;
+    private static boolean ZF;
+    private static byte[] DS_BYTES;
 
     private ASM_RUNTIME() {
     }
@@ -79,6 +84,14 @@ public final class ASM_RUNTIME {
      */
     public static void MOV_CX(int value) {
         CX = value & 0xffff;
+    }
+
+    /**
+     * Assembly intent bridge for {@code lds si,[source]} using a Java byte array as backing memory.
+     */
+    public static void LDS_SI(byte[] source) {
+        DS_BYTES = source;
+        SI = 0;
     }
 
     /**
@@ -185,5 +198,67 @@ public final class ASM_RUNTIME {
     public static void REP_STOSW() {
         // TODO: Replace with platform backend behavior where applicable.
         // Uses ES:DI destination, AX word value, CX word count.
+    }
+
+    /**
+     * Assembly intent bridge for {@code lodsb} from DS:SI.
+     */
+    public static void LODSB() {
+        if (DS_BYTES == null || SI < 0 || SI >= DS_BYTES.length) {
+            AL = 0;
+        } else {
+            AL = DS_BYTES[SI] & 0xff;
+        }
+        SI++;
+        AX = (AH << 8) | AL;
+    }
+
+    /**
+     * Assembly intent bridge for {@code rep outsb} from DS:SI to port DX.
+     */
+    public static void REP_OUTSB() {
+        while (CX != 0) {
+            LODSB();
+            OUT_DX_AL();
+            CX = (CX - 1) & 0xffff;
+        }
+    }
+
+    /**
+     * Assembly intent bridge for {@code test value,mask}.
+     */
+    public static void TEST_IMM8(int value, int mask) {
+        ZF = ((value & mask) & 0xff) == 0;
+    }
+
+    /**
+     * Assembly intent bridge for {@code jz}.
+     */
+    public static boolean JZ() {
+        return ZF;
+    }
+
+    /**
+     * Assembly intent bridge for {@code loop label} condition.
+     */
+    public static boolean LOOP() {
+        CX = (CX - 1) & 0xffff;
+        return CX != 0;
+    }
+
+    /**
+     * Assembly intent bridge for {@code mov ax,ss}.
+     */
+    public static void MOV_AX_SS() {
+        AX = SS & 0xffff;
+        AL = AX & 0xff;
+        AH = (AX >> 8) & 0xff;
+    }
+
+    /**
+     * Assembly intent bridge for {@code mov ds,ax}.
+     */
+    public static void MOV_DS_AX() {
+        DS = AX & 0xffff;
     }
 }

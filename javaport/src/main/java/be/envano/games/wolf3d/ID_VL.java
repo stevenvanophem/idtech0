@@ -1,10 +1,16 @@
 package be.envano.games.wolf3d;
 
+import java.util.Arrays;
+
 public final class ID_VL {
 
     private static final String[] ParmStrings = {"HIDDENCARD", ""};
     private static int linewidth;
     private static final int[] ylookup = new int[ID_VL_H.MAXSCANLINES];
+    private static boolean fastpalette;
+    private static final byte[] palette1 = new byte[256 * 3];
+    private static final byte[] palette2 = new byte[256 * 3];
+    private static boolean screenfaded;
 
     private ID_VL() {
     }
@@ -197,6 +203,136 @@ public final class ID_VL {
         red[0] = ASM_RUNTIME.INPORTB(ID_VL_H.PEL_DATA);
         green[0] = ASM_RUNTIME.INPORTB(ID_VL_H.PEL_DATA);
         blue[0] = ASM_RUNTIME.INPORTB(ID_VL_H.PEL_DATA);
+    }
+
+    /**
+     * Correlates to {@code original/WOLFSRC/ID_VL.C:371} ({@code void VL_SetPalette (byte far *palette)}).
+     */
+    public static void VL_SetPalette(byte[] palette) {
+        ASM_RUNTIME.MOV_DX(ID_VL_H.PEL_WRITE_ADR);
+        ASM_RUNTIME.MOV_AL(0);
+        ASM_RUNTIME.OUT_DX_AL();
+        ASM_RUNTIME.MOV_DX(ID_VL_H.PEL_DATA);
+        ASM_RUNTIME.LDS_SI(palette);
+
+        ASM_RUNTIME.TEST_IMM8((fastpalette ? 1 : 0), 1);
+        if (ASM_RUNTIME.JZ()) {
+            ASM_RUNTIME.MOV_CX(256);
+            do {
+                ASM_RUNTIME.LODSB();
+                ASM_RUNTIME.OUT_DX_AL();
+                ASM_RUNTIME.LODSB();
+                ASM_RUNTIME.OUT_DX_AL();
+                ASM_RUNTIME.LODSB();
+                ASM_RUNTIME.OUT_DX_AL();
+            } while (ASM_RUNTIME.LOOP());
+        } else {
+            ASM_RUNTIME.MOV_CX(768);
+            ASM_RUNTIME.REP_OUTSB();
+        }
+
+        ASM_RUNTIME.MOV_AX_SS();
+        ASM_RUNTIME.MOV_DS_AX();
+    }
+
+    /**
+     * Correlates to {@code original/WOLFSRC/ID_VL.C:424} ({@code void VL_GetPalette (byte far *palette)}).
+     */
+    public static void VL_GetPalette(byte[] palette) {
+        int i;
+
+        ASM_RUNTIME.OUTPORTB(ID_VL_H.PEL_READ_ADR, 0);
+        for (i = 0; i < 768; i++) {
+            palette[i] = (byte) ASM_RUNTIME.INPORTB(ID_VL_H.PEL_DATA);
+        }
+    }
+
+    /**
+     * Correlates to {@code original/WOLFSRC/ID_VL.C:535} ({@code void VL_TestPaletteSet (void)}).
+     */
+    public static void VL_TestPaletteSet() {
+        int i;
+
+        for (i = 0; i < 768; i++) {
+            palette1[i] = (byte) i;
+        }
+
+        fastpalette = true;
+        VL_SetPalette(palette1);
+        VL_GetPalette(palette2);
+        if (!Arrays.equals(palette1, palette2)) {
+            fastpalette = false;
+        }
+    }
+
+    /**
+     * Correlates to {@code original/WOLFSRC/ID_VL.C:444}
+     * ({@code void VL_FadeOut (int start, int end, int red, int green, int blue, int steps)}).
+     */
+    public static void VL_FadeOut(int start, int end, int red, int green, int blue, int steps) {
+        int i;
+        int j;
+        int orig;
+        int delta;
+        int origptr;
+        int newptr;
+
+        VL_WaitVBL(1);
+        VL_GetPalette(palette1);
+        System.arraycopy(palette1, 0, palette2, 0, 768);
+
+        for (i = 0; i < steps; i++) {
+            origptr = start * 3;
+            newptr = start * 3;
+            for (j = start; j <= end; j++) {
+                orig = palette1[origptr++] & 0xff;
+                delta = red - orig;
+                palette2[newptr++] = (byte) (orig + delta * i / steps);
+                orig = palette1[origptr++] & 0xff;
+                delta = green - orig;
+                palette2[newptr++] = (byte) (orig + delta * i / steps);
+                orig = palette1[origptr++] & 0xff;
+                delta = blue - orig;
+                palette2[newptr++] = (byte) (orig + delta * i / steps);
+            }
+
+            VL_WaitVBL(1);
+            VL_SetPalette(palette2);
+        }
+
+        VL_FillPalette(red, green, blue);
+
+        screenfaded = true;
+    }
+
+    /**
+     * Correlates to {@code original/WOLFSRC/ID_VL.C:495}
+     * ({@code void VL_FadeIn (int start, int end, byte far *palette, int steps)}).
+     */
+    public static void VL_FadeIn(int start, int end, byte[] palette, int steps) {
+        int i;
+        int j;
+        int delta;
+
+        VL_WaitVBL(1);
+        VL_GetPalette(palette1);
+        System.arraycopy(palette1, 0, palette2, 0, palette1.length);
+
+        start *= 3;
+        end = end * 3 + 2;
+
+        for (i = 0; i < steps; i++) {
+            for (j = start; j <= end; j++) {
+                delta = (palette[j] & 0xff) - (palette1[j] & 0xff);
+                palette2[j] = (byte) ((palette1[j] & 0xff) + delta * i / steps);
+            }
+
+            VL_WaitVBL(1);
+            VL_SetPalette(palette2);
+        }
+
+        VL_SetPalette(palette);
+        screenfaded = false;
     }
 
     /**
