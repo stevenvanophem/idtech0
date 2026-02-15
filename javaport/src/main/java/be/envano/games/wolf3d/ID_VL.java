@@ -470,6 +470,254 @@ public final class ID_VL {
     }
 
     /**
+     * Correlates to {@code original/WOLFSRC/ID_VL.C:752} ({@code void VL_MemToLatch (byte far *source, int width, int height, unsigned dest)}).
+     */
+    public static void VL_MemToLatch(byte[] source, int width, int height, int dest) {
+        int count;
+        int plane;
+        int mask;
+        int sourceIndex;
+
+        count = ((width + 3) / 4) * height;
+        mask = 1;
+        sourceIndex = 0;
+        for (plane = 0; plane < 4; plane++) {
+            ID_VL_H.VGAMAPMASK(mask);
+            mask <<= 1;
+
+            ASM_RUNTIME.MOV_CX(count);
+            ASM_RUNTIME.MOV_AX(ID_VL_H.SCREENSEG);
+            ASM_RUNTIME.MOV_ES_AX();
+            ASM_RUNTIME.COPY_BYTES_TO_VIDEO(screenseg, dest, source, sourceIndex, count);
+            ASM_RUNTIME.MOV_AX_SS();
+            ASM_RUNTIME.MOV_DS_AX();
+
+            sourceIndex += count;
+        }
+    }
+
+    /**
+     * Correlates to {@code original/WOLFSRC/ID_VL.C:791} ({@code void VL_MemToScreen (byte far *source, int width, int height, int x, int y)}).
+     */
+    public static void VL_MemToScreen(byte[] source, int width, int height, int x, int y) {
+        int screen;
+        int dest;
+        int mask;
+        int plane;
+        int sourceIndex;
+
+        width >>= 2;
+        dest = bufferofs + ylookup[y] + (x >> 2);
+        mask = 1 << (x & 3);
+        sourceIndex = 0;
+
+        for (plane = 0; plane < 4; plane++) {
+            ID_VL_H.VGAMAPMASK(mask);
+            mask <<= 1;
+            if (mask == 16) {
+                mask = 1;
+            }
+
+            screen = dest;
+            for (y = 0; y < height; y++, screen += linewidth, sourceIndex += width) {
+                ASM_RUNTIME.COPY_BYTES_TO_VIDEO(screenseg, screen, source, sourceIndex, width);
+            }
+        }
+    }
+
+    /**
+     * Correlates to {@code original/WOLFSRC/ID_VL.C:826} ({@code void VL_MaskedToScreen (byte far *source, int width, int height, int x, int y)}).
+     */
+    public static void VL_MaskedToScreen(byte[] source, int width, int height, int x, int y) {
+        int screen;
+        int dest;
+        int mask;
+        int plane;
+        int sourceIndex;
+
+        width >>= 2;
+        dest = bufferofs + ylookup[y] + (x >> 2);
+        // mask = 1 << (x&3);
+        // maskptr = source;
+        mask = 0;
+        sourceIndex = 0;
+
+        for (plane = 0; plane < 4; plane++) {
+            ID_VL_H.VGAMAPMASK(mask);
+            mask <<= 1;
+            if (mask == 16) {
+                mask = 1;
+            }
+
+            screen = dest;
+            for (y = 0; y < height; y++, screen += linewidth, sourceIndex += width) {
+                ASM_RUNTIME.COPY_BYTES_TO_VIDEO(screenseg, screen, source, sourceIndex, width);
+            }
+        }
+    }
+
+    /**
+     * Correlates to {@code original/WOLFSRC/ID_VL.C:861} ({@code void VL_LatchToScreen (unsigned source, int width, int height, int x, int y)}).
+     */
+    public static void VL_LatchToScreen(int source, int width, int height, int x, int y) {
+        int src;
+        int dest;
+        int linedelta;
+        int row;
+
+        ID_VL_H.VGAWRITEMODE(1);
+        ID_VL_H.VGAMAPMASK(15);
+
+        dest = bufferofs + ylookup[y] + (x >> 2);
+        src = source;
+        linedelta = linewidth - width;
+        for (row = 0; row < height; row++) {
+            ASM_RUNTIME.COPY_VIDEO_TO_VIDEO(screenseg, src, dest, width);
+            src += width;
+            dest += width;
+            dest += linedelta;
+        }
+
+        ASM_RUNTIME.MOV_AX_SS();
+        ASM_RUNTIME.MOV_DS_AX();
+
+        ID_VL_H.VGAWRITEMODE(0);
+    }
+
+    /**
+     * Correlates to {@code original/WOLFSRC/ID_VL.C:909} ({@code void VL_ScreenToScreen (unsigned source, unsigned dest,int width, int height)}).
+     * <p>
+     * Note: this routine appears in a {@code #if 0} block in the original source.
+     */
+    public static void VL_ScreenToScreen(int source, int dest, int width, int height) {
+        int linedelta;
+        int row;
+        int src;
+        int dst;
+
+        ID_VL_H.VGAWRITEMODE(1);
+        ID_VL_H.VGAMAPMASK(15);
+
+        src = source;
+        dst = dest;
+        linedelta = linewidth - width;
+        for (row = 0; row < height; row++) {
+            ASM_RUNTIME.COPY_VIDEO_TO_VIDEO(screenseg, src, dst, width);
+            src += width;
+            src += linedelta;
+            dst += width;
+            dst += linedelta;
+        }
+
+        ASM_RUNTIME.MOV_AX_SS();
+        ASM_RUNTIME.MOV_DS_AX();
+
+        ID_VL_H.VGAWRITEMODE(0);
+    }
+
+    /**
+     * Correlates to {@code original/WOLFSRC/ID_VL.C:960} ({@code void VL_DrawTile8String (char *str, char far *tile8ptr, int printx, int printy)}).
+     */
+    public static void VL_DrawTile8String(String str, byte[] tile8ptr, int printx, int printy) {
+        int i;
+        int strIndex;
+        int dest;
+        int screen;
+        int src;
+        int ch;
+
+        dest = bufferofs + ylookup[printy] + (printx >> 2);
+
+        strIndex = 0;
+        while (strIndex < str.length() && str.charAt(strIndex) != 0) {
+            ch = str.charAt(strIndex) & 0xff;
+            src = ch << 6;
+
+            ID_VL_H.VGAMAPMASK(1);
+            screen = dest;
+            for (i = 0; i < 8; i++, screen += linewidth) {
+                ASM_RUNTIME.COPY_BYTES_TO_VIDEO(screenseg, screen, tile8ptr, src, 2);
+                src += 2;
+            }
+            ID_VL_H.VGAMAPMASK(2);
+            screen = dest;
+            for (i = 0; i < 8; i++, screen += linewidth) {
+                ASM_RUNTIME.COPY_BYTES_TO_VIDEO(screenseg, screen, tile8ptr, src, 2);
+                src += 2;
+            }
+            ID_VL_H.VGAMAPMASK(4);
+            screen = dest;
+            for (i = 0; i < 8; i++, screen += linewidth) {
+                ASM_RUNTIME.COPY_BYTES_TO_VIDEO(screenseg, screen, tile8ptr, src, 2);
+                src += 2;
+            }
+            ID_VL_H.VGAMAPMASK(8);
+            screen = dest;
+            for (i = 0; i < 8; i++, screen += linewidth) {
+                ASM_RUNTIME.COPY_BYTES_TO_VIDEO(screenseg, screen, tile8ptr, src, 2);
+                src += 2;
+            }
+
+            strIndex++;
+            printx += 8;
+            dest += 2;
+        }
+    }
+
+    /**
+     * Correlates to {@code original/WOLFSRC/ID_VL.C:1005} ({@code void VL_DrawLatch8String (char *str, unsigned tile8ptr, int printx, int printy)}).
+     */
+    public static void VL_DrawLatch8String(String str, int tile8ptr, int printx, int printy) {
+        int i;
+        int strIndex;
+        int src;
+        int dest;
+        int lineDest;
+        int ch;
+
+        dest = bufferofs + ylookup[printy] + (printx >> 2);
+
+        ID_VL_H.VGAWRITEMODE(1);
+        ID_VL_H.VGAMAPMASK(15);
+
+        strIndex = 0;
+        while (strIndex < str.length() && str.charAt(strIndex) != 0) {
+            ch = str.charAt(strIndex) & 0xff;
+            src = tile8ptr + (ch << 4);
+
+            lineDest = dest;
+            for (i = 0; i < 8; i++) {
+                ASM_RUNTIME.COPY_VIDEO_TO_VIDEO(screenseg, src + i * 2, lineDest, 2);
+                lineDest += linewidth;
+            }
+
+            ASM_RUNTIME.MOV_AX_SS();
+            ASM_RUNTIME.MOV_DS_AX();
+
+            strIndex++;
+            printx += 8;
+            dest += 2;
+        }
+
+        ID_VL_H.VGAWRITEMODE(0);
+    }
+
+    /**
+     * Correlates to {@code original/WOLFSRC/ID_VL.C:1071} ({@code void VL_SizeTile8String (char *str, int *width, int *height)}).
+     */
+    public static void VL_SizeTile8String(String str, int[] width, int[] height) {
+        int i;
+
+        i = 0;
+        while (i < str.length() && str.charAt(i) != 0) {
+            i++;
+        }
+
+        height[0] = 8;
+        width[0] = 8 * i;
+    }
+
+    /**
      * Correlates to {@code original/WOLFSRC/ID_VL_A.ASM:30} ({@code PROC VL_WaitVBL num:WORD}).
      */
     public static void VL_WaitVBL(int vbls) {

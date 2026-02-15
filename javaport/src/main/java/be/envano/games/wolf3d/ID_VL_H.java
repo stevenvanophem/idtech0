@@ -37,4 +37,21 @@ public final class ID_VL_H {
         ASM_RUNTIME.OUT_DX_AX();
         ASM_RUNTIME.STI();
     }
+
+    /**
+     * Correlates to {@code original/WOLFSRC/ID_VL.H:104}
+     * ({@code #define VGAWRITEMODE(x) ...}).
+     */
+    public static void VGAWRITEMODE(int x) {
+        ASM_RUNTIME.CLI();
+        ASM_RUNTIME.MOV_DX(GC_INDEX);
+        ASM_RUNTIME.MOV_AL(GC_MODE);
+        ASM_RUNTIME.OUT_DX_AL();
+        ASM_RUNTIME.INC_DX();
+        ASM_RUNTIME.IN_AL_DX();
+        ASM_RUNTIME.AND_AL(0xfc);
+        ASM_RUNTIME.OR_AL(x);
+        ASM_RUNTIME.OUT_DX_AL();
+        ASM_RUNTIME.STI();
+    }
 }

@@ -204,6 +204,14 @@ public final class ASM_RUNTIME {
     }
 
     /**
+     * Assembly intent bridge for {@code or al,<mask>}.
+     */
+    public static void OR_AL(int mask) {
+        AL = AL | (mask & 0xff);
+        AX = (AH << 8) | AL;
+    }
+
+    /**
      * Assembly intent bridge for {@code rep stosw} using current register values.
      */
     public static void REP_STOSW() {
@@ -284,6 +292,20 @@ public final class ASM_RUNTIME {
      * Assembly intent bridge for filling contiguous bytes in planar video memory.
      */
     public static void FILL_VIDEO_BYTES(int segment, int offset, int value, int count) {
+        // TODO: Replace with platform/backend behavior where applicable.
+    }
+
+    /**
+     * Assembly intent bridge for copying bytes from Java memory to video memory.
+     */
+    public static void COPY_BYTES_TO_VIDEO(int segment, int destOffset, byte[] source, int sourceOffset, int count) {
+        // TODO: Replace with platform/backend behavior where applicable.
+    }
+
+    /**
+     * Assembly intent bridge for copying bytes within video memory.
+     */
+    public static void COPY_VIDEO_TO_VIDEO(int segment, int sourceOffset, int destOffset, int count) {
         // TODO: Replace with platform/backend behavior where applicable.
     }
 }
