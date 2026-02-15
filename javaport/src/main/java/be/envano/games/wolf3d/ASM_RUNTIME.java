@@ -2,7 +2,7 @@ package be.envano.games.wolf3d;
 
 public final class ASM_RUNTIME {
 
-    private static final byte[] VRAM = new byte[0x10000];
+    private static final byte[][] VRAM_PLANES = new byte[4][0x10000];
     private static final int[] PORT8 = new int[0x10000];
     private static int AX;
     private static int BX;
@@ -370,13 +370,20 @@ public final class ASM_RUNTIME {
      */
     public static void WRITE_VIDEO_BYTE(int segment, int offset, int value) {
         int index;
+        int mapMask;
+        int plane;
 
         if (segment != 0xA000) {
             return;
         }
 
         index = offset & 0xffff;
-        VRAM[index] = (byte) (value & 0xff);
+        mapMask = PORT8[0x3C5] & 0x0f;
+        for (plane = 0; plane < 4; plane++) {
+            if (((mapMask >> plane) & 1) != 0) {
+                VRAM_PLANES[plane][index] = (byte) (value & 0xff);
+            }
+        }
     }
 
     /**
@@ -392,7 +399,7 @@ public final class ASM_RUNTIME {
 
         start = offset & 0xffff;
         for (i = 0; i < count; i++) {
-            VRAM[(start + i) & 0xffff] = (byte) (value & 0xff);
+            WRITE_VIDEO_BYTE(segment, (start + i) & 0xffff, value);
         }
     }
 
@@ -414,7 +421,7 @@ public final class ASM_RUNTIME {
             if (src < 0 || src >= source.length) {
                 break;
             }
-            VRAM[(dst + i) & 0xffff] = source[src++];
+            WRITE_VIDEO_BYTE(segment, (dst + i) & 0xffff, source[src++] & 0xff);
         }
     }
 
@@ -425,6 +432,8 @@ public final class ASM_RUNTIME {
         int i;
         int src;
         int dst;
+        int mapMask;
+        int plane;
 
         if (segment != 0xA000 || count <= 0) {
             return;
@@ -432,16 +441,42 @@ public final class ASM_RUNTIME {
 
         src = sourceOffset & 0xffff;
         dst = destOffset & 0xffff;
+        mapMask = PORT8[0x3C5] & 0x0f;
 
         if (src < dst && src + count > dst) {
             for (i = count - 1; i >= 0; i--) {
-                VRAM[(dst + i) & 0xffff] = VRAM[(src + i) & 0xffff];
+                for (plane = 0; plane < 4; plane++) {
+                    if (((mapMask >> plane) & 1) != 0) {
+                        VRAM_PLANES[plane][(dst + i) & 0xffff] = VRAM_PLANES[plane][(src + i) & 0xffff];
+                    }
+                }
             }
             return;
         }
 
         for (i = 0; i < count; i++) {
-            VRAM[(dst + i) & 0xffff] = VRAM[(src + i) & 0xffff];
+            for (plane = 0; plane < 4; plane++) {
+                if (((mapMask >> plane) & 1) != 0) {
+                    VRAM_PLANES[plane][(dst + i) & 0xffff] = VRAM_PLANES[plane][(src + i) & 0xffff];
+                }
+            }
         }
+    }
+
+    /**
+     * Debug accessor for planar VRAM byte at the given plane and offset.
+     */
+    public static int DEBUG_READ_VRAM_PLANE_BYTE(int plane, int offset) {
+        if (plane < 0 || plane >= 4) {
+            return 0;
+        }
+        return VRAM_PLANES[plane][offset & 0xffff] & 0xff;
+    }
+
+    /**
+     * Debug accessor for byte I/O port state.
+     */
+    public static int DEBUG_READ_PORT8(int port) {
+        return PORT8[port & 0xffff] & 0xff;
     }
 }
