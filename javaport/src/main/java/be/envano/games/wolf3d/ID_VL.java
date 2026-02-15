@@ -3,20 +3,8 @@ package be.envano.games.wolf3d;
 public final class ID_VL {
 
     private static final String[] ParmStrings = {"HIDDENCARD", ""};
-    private static final int SCREENSEG = 0xA000;
-    private static final int SC_INDEX = 0x3C4;
-    private static final int SC_MAPMASK = 2;
-    private static final int SC_MEMMODE = 4;
-    private static final int CRTC_INDEX = 0x3D4;
-    private static final int CRTC_OFFSET = 19;
-    private static final int CRTC_UNDERLINE = 20;
-    private static final int CRTC_MODE = 23;
-    private static final int GC_INDEX = 0x3CE;
-    private static final int GC_MODE = 5;
-    private static final int GC_MISCELLANEOUS = 6;
-    private static final int MAXSCANLINES = 200;
     private static int linewidth;
-    private static final int[] ylookup = new int[MAXSCANLINES];
+    private static final int[] ylookup = new int[ID_VL_H.MAXSCANLINES];
 
     private ID_VL() {
     }
@@ -86,22 +74,22 @@ public final class ID_VL {
         //
         // turn off chain 4 and odd/even
         //
-        ASM_RUNTIME.OUTPORTB(SC_INDEX, SC_MEMMODE);
-        ASM_RUNTIME.OUTPORTB(SC_INDEX + 1, (ASM_RUNTIME.INPORTB(SC_INDEX + 1) & ~8) | 4);
+        ASM_RUNTIME.OUTPORTB(ID_VL_H.SC_INDEX, ID_VL_H.SC_MEMMODE);
+        ASM_RUNTIME.OUTPORTB(ID_VL_H.SC_INDEX + 1, (ASM_RUNTIME.INPORTB(ID_VL_H.SC_INDEX + 1) & ~8) | 4);
 
-        ASM_RUNTIME.OUTPORTB(SC_INDEX, SC_MAPMASK);
+        ASM_RUNTIME.OUTPORTB(ID_VL_H.SC_INDEX, ID_VL_H.SC_MAPMASK);
 
         //
         // turn off odd/even and set write mode 0
         //
-        ASM_RUNTIME.OUTPORTB(GC_INDEX, GC_MODE);
-        ASM_RUNTIME.OUTPORTB(GC_INDEX + 1, ASM_RUNTIME.INPORTB(GC_INDEX + 1) & ~0x13);
+        ASM_RUNTIME.OUTPORTB(ID_VL_H.GC_INDEX, ID_VL_H.GC_MODE);
+        ASM_RUNTIME.OUTPORTB(ID_VL_H.GC_INDEX + 1, ASM_RUNTIME.INPORTB(ID_VL_H.GC_INDEX + 1) & ~0x13);
 
         //
         // turn off chain
         //
-        ASM_RUNTIME.OUTPORTB(GC_INDEX, GC_MISCELLANEOUS);
-        ASM_RUNTIME.OUTPORTB(GC_INDEX + 1, ASM_RUNTIME.INPORTB(GC_INDEX + 1) & ~2);
+        ASM_RUNTIME.OUTPORTB(ID_VL_H.GC_INDEX, ID_VL_H.GC_MISCELLANEOUS);
+        ASM_RUNTIME.OUTPORTB(ID_VL_H.GC_INDEX + 1, ASM_RUNTIME.INPORTB(ID_VL_H.GC_INDEX + 1) & ~2);
 
         //
         // clear the entire buffer space, because int 10h only did 16 k / plane
@@ -111,27 +99,27 @@ public final class ID_VL {
         //
         // change CRTC scanning from doubleword to byte mode, allowing >64k scans
         //
-        ASM_RUNTIME.OUTPORTB(CRTC_INDEX, CRTC_UNDERLINE);
-        ASM_RUNTIME.OUTPORTB(CRTC_INDEX + 1, ASM_RUNTIME.INPORTB(CRTC_INDEX + 1) & ~0x40);
+        ASM_RUNTIME.OUTPORTB(ID_VL_H.CRTC_INDEX, ID_VL_H.CRTC_UNDERLINE);
+        ASM_RUNTIME.OUTPORTB(ID_VL_H.CRTC_INDEX + 1, ASM_RUNTIME.INPORTB(ID_VL_H.CRTC_INDEX + 1) & ~0x40);
 
-        ASM_RUNTIME.OUTPORTB(CRTC_INDEX, CRTC_MODE);
-        ASM_RUNTIME.OUTPORTB(CRTC_INDEX + 1, ASM_RUNTIME.INPORTB(CRTC_INDEX + 1) | 0x40);
+        ASM_RUNTIME.OUTPORTB(ID_VL_H.CRTC_INDEX, ID_VL_H.CRTC_MODE);
+        ASM_RUNTIME.OUTPORTB(ID_VL_H.CRTC_INDEX + 1, ASM_RUNTIME.INPORTB(ID_VL_H.CRTC_INDEX + 1) | 0x40);
     }
 
     private static void VL_ClearVideo(int color) {
-        ASM_RUNTIME.MOV_DX(GC_INDEX);
-        ASM_RUNTIME.MOV_AL(GC_MODE);
+        ASM_RUNTIME.MOV_DX(ID_VL_H.GC_INDEX);
+        ASM_RUNTIME.MOV_AL(ID_VL_H.GC_MODE);
         ASM_RUNTIME.OUT_DX_AL();
         ASM_RUNTIME.INC_DX();
         ASM_RUNTIME.IN_AL_DX();
         ASM_RUNTIME.AND_AL(0xfc);
         ASM_RUNTIME.OUT_DX_AL();
 
-        ASM_RUNTIME.MOV_DX(SC_INDEX);
-        ASM_RUNTIME.MOV_AX(SC_MAPMASK + 15 * 256);
+        ASM_RUNTIME.MOV_DX(ID_VL_H.SC_INDEX);
+        ASM_RUNTIME.MOV_AX(ID_VL_H.SC_MAPMASK + 15 * 256);
         ASM_RUNTIME.OUT_DX_AX();
 
-        ASM_RUNTIME.MOV_AX(SCREENSEG);
+        ASM_RUNTIME.MOV_AX(ID_VL_H.SCREENSEG);
         ASM_RUNTIME.MOV_ES_AX();
         ASM_RUNTIME.MOV_AL(color);
         ASM_RUNTIME.MOV_AH_AL();
@@ -147,7 +135,7 @@ public final class ID_VL {
         //
         // set wide virtual screen
         //
-        ASM_RUNTIME.OUTPORT(CRTC_INDEX, CRTC_OFFSET + width * 256);
+        ASM_RUNTIME.OUTPORT(ID_VL_H.CRTC_INDEX, ID_VL_H.CRTC_OFFSET + width * 256);
 
         //
         // set up lookup tables
@@ -156,7 +144,7 @@ public final class ID_VL {
 
         offset = 0;
 
-        for (i = 0; i < MAXSCANLINES; i++) {
+        for (i = 0; i < ID_VL_H.MAXSCANLINES; i++) {
             ylookup[i] = offset;
             offset += linewidth;
         }
