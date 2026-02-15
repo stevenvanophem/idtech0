@@ -190,6 +190,16 @@ public final class ID_VL {
     }
 
     /**
+     * Correlates to {@code original/WOLFSRC/ID_VL.C:350} ({@code void VL_GetColor (int color, int *red, int *green, int *blue)}).
+     */
+    public static void VL_GetColor(int color, int[] red, int[] green, int[] blue) {
+        ASM_RUNTIME.OUTPORTB(ID_VL_H.PEL_READ_ADR, color);
+        red[0] = ASM_RUNTIME.INPORTB(ID_VL_H.PEL_DATA);
+        green[0] = ASM_RUNTIME.INPORTB(ID_VL_H.PEL_DATA);
+        blue[0] = ASM_RUNTIME.INPORTB(ID_VL_H.PEL_DATA);
+    }
+
+    /**
      * Correlates to {@code original/WOLFSRC/ID_VL_A.ASM:30} ({@code PROC VL_WaitVBL num:WORD}).
      */
     public static void VL_WaitVBL(int vbls) {
