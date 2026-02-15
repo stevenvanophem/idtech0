@@ -3,6 +3,7 @@ package be.envano.games.wolf3d;
 public final class ASM_RUNTIME {
 
     private static final byte[] VRAM = new byte[0x10000];
+    private static final int[] PORT8 = new int[0x10000];
     private static int AX;
     private static int BX;
     private static int DX;
@@ -218,22 +219,22 @@ public final class ASM_RUNTIME {
      * Assembly intent bridge for byte output to an I/O port ({@code outportb}).
      */
     public static void OUTPORTB(int port, int value) {
-        // TODO: Replace with platform backend behavior where applicable.
+        PORT8[port & 0xffff] = value & 0xff;
     }
 
     /**
      * Assembly intent bridge for word output to an I/O port ({@code outport}).
      */
     public static void OUTPORT(int port, int value) {
-        // TODO: Replace with platform backend behavior where applicable.
+        OUTPORTB(port, value & 0xff);
+        OUTPORTB((port + 1) & 0xffff, (value >> 8) & 0xff);
     }
 
     /**
      * Assembly intent bridge for byte input from an I/O port ({@code inportb}).
      */
     public static int INPORTB(int port) {
-        // TODO: Replace with platform backend behavior where applicable.
-        return 0;
+        return PORT8[port & 0xffff] & 0xff;
     }
 
     /**
