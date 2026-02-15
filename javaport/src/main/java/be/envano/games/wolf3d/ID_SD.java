@@ -27,6 +27,8 @@ public final class ID_SD {
 
     // Correlates to: original/WOLFSRC/ID_SD.C (SD_Startup)
     public static void SD_Startup() {
+        // Correlates to original/WOLFSRC/ID_SD.C:1922 (LocalTime = TimeCount = alTimeCount = 0;).
+        TimeCount = 0;
     }
 
     // Correlates to: original/WOLFSRC/ID_SD.C (SD_Shutdown)

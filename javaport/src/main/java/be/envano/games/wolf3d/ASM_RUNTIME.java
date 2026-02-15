@@ -2,6 +2,7 @@ package be.envano.games.wolf3d;
 
 public final class ASM_RUNTIME {
 
+    private static final byte[] VRAM = new byte[0x10000];
     private static int AX;
     private static int BX;
     private static int DX;
@@ -284,8 +285,21 @@ public final class ASM_RUNTIME {
      * Assembly intent bridge for {@code rep stosw} using current register values.
      */
     public static void REP_STOSW() {
-        // TODO: Replace with platform backend behavior where applicable.
-        // Uses ES:DI destination, AX word value, CX word count.
+        int count;
+        int base;
+
+        count = CX & 0xffff;
+        base = DI & 0xffff;
+
+        while (count != 0) {
+            WRITE_VIDEO_BYTE(ES, base, AX & 0xff);
+            WRITE_VIDEO_BYTE(ES, (base + 1) & 0xffff, (AX >> 8) & 0xff);
+            base = (base + 2) & 0xffff;
+            count--;
+        }
+
+        DI = base & 0xffff;
+        CX = 0;
     }
 
     /**
@@ -354,27 +368,79 @@ public final class ASM_RUNTIME {
      * Assembly intent bridge for writing a byte to planar video memory.
      */
     public static void WRITE_VIDEO_BYTE(int segment, int offset, int value) {
-        // TODO: Replace with platform/backend behavior where applicable.
+        int index;
+
+        if (segment != 0xA000) {
+            return;
+        }
+
+        index = offset & 0xffff;
+        VRAM[index] = (byte) (value & 0xff);
     }
 
     /**
      * Assembly intent bridge for filling contiguous bytes in planar video memory.
      */
     public static void FILL_VIDEO_BYTES(int segment, int offset, int value, int count) {
-        // TODO: Replace with platform/backend behavior where applicable.
+        int i;
+        int start;
+
+        if (segment != 0xA000 || count <= 0) {
+            return;
+        }
+
+        start = offset & 0xffff;
+        for (i = 0; i < count; i++) {
+            VRAM[(start + i) & 0xffff] = (byte) (value & 0xff);
+        }
     }
 
     /**
      * Assembly intent bridge for copying bytes from Java memory to video memory.
      */
     public static void COPY_BYTES_TO_VIDEO(int segment, int destOffset, byte[] source, int sourceOffset, int count) {
-        // TODO: Replace with platform/backend behavior where applicable.
+        int i;
+        int dst;
+        int src;
+
+        if (segment != 0xA000 || source == null || count <= 0) {
+            return;
+        }
+
+        dst = destOffset & 0xffff;
+        src = sourceOffset;
+        for (i = 0; i < count; i++) {
+            if (src < 0 || src >= source.length) {
+                break;
+            }
+            VRAM[(dst + i) & 0xffff] = source[src++];
+        }
     }
 
     /**
      * Assembly intent bridge for copying bytes within video memory.
      */
     public static void COPY_VIDEO_TO_VIDEO(int segment, int sourceOffset, int destOffset, int count) {
-        // TODO: Replace with platform/backend behavior where applicable.
+        int i;
+        int src;
+        int dst;
+
+        if (segment != 0xA000 || count <= 0) {
+            return;
+        }
+
+        src = sourceOffset & 0xffff;
+        dst = destOffset & 0xffff;
+
+        if (src < dst && src + count > dst) {
+            for (i = count - 1; i >= 0; i--) {
+                VRAM[(dst + i) & 0xffff] = VRAM[(src + i) & 0xffff];
+            }
+            return;
+        }
+
+        for (i = 0; i < count; i++) {
+            VRAM[(dst + i) & 0xffff] = VRAM[(src + i) & 0xffff];
+        }
     }
 }
