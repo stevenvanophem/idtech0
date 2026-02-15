@@ -3,6 +3,15 @@ package be.envano.games.wolf3d;
 public final class ID_VL {
 
     private static final String[] ParmStrings = {"HIDDENCARD", ""};
+    private static final int SC_INDEX = 0x3C4;
+    private static final int SC_MAPMASK = 2;
+    private static final int SC_MEMMODE = 4;
+    private static final int CRTC_INDEX = 0x3D4;
+    private static final int CRTC_UNDERLINE = 20;
+    private static final int CRTC_MODE = 23;
+    private static final int GC_INDEX = 0x3CE;
+    private static final int GC_MODE = 5;
+    private static final int GC_MISCELLANEOUS = 6;
 
     private ID_VL() {
     }
@@ -61,8 +70,51 @@ public final class ID_VL {
         return 5;
     }
 
+    /**
+     * Correlates to {@code original/WOLFSRC/ID_VL.C:192} ({@code void VL_DePlaneVGA(void)}).
+     */
     private static void VL_DePlaneVGA() {
-        // TODO: Port non-linear VGA plane setup from ID_VL.C.
+        //
+        // change CPU addressing to non linear mode
+        //
+
+        //
+        // turn off chain 4 and odd/even
+        //
+        ASM_RUNTIME.OUTPORTB(SC_INDEX, SC_MEMMODE);
+        ASM_RUNTIME.OUTPORTB(SC_INDEX + 1, (ASM_RUNTIME.INPORTB(SC_INDEX + 1) & ~8) | 4);
+
+        ASM_RUNTIME.OUTPORTB(SC_INDEX, SC_MAPMASK);
+
+        //
+        // turn off odd/even and set write mode 0
+        //
+        ASM_RUNTIME.OUTPORTB(GC_INDEX, GC_MODE);
+        ASM_RUNTIME.OUTPORTB(GC_INDEX + 1, ASM_RUNTIME.INPORTB(GC_INDEX + 1) & ~0x13);
+
+        //
+        // turn off chain
+        //
+        ASM_RUNTIME.OUTPORTB(GC_INDEX, GC_MISCELLANEOUS);
+        ASM_RUNTIME.OUTPORTB(GC_INDEX + 1, ASM_RUNTIME.INPORTB(GC_INDEX + 1) & ~2);
+
+        //
+        // clear the entire buffer space, because int 10h only did 16 k / plane
+        //
+        VL_ClearVideo(0);
+
+        //
+        // change CRTC scanning from doubleword to byte mode, allowing >64k scans
+        //
+        ASM_RUNTIME.OUTPORTB(CRTC_INDEX, CRTC_UNDERLINE);
+        ASM_RUNTIME.OUTPORTB(CRTC_INDEX + 1, ASM_RUNTIME.INPORTB(CRTC_INDEX + 1) & ~0x40);
+
+        ASM_RUNTIME.OUTPORTB(CRTC_INDEX, CRTC_MODE);
+        ASM_RUNTIME.OUTPORTB(CRTC_INDEX + 1, ASM_RUNTIME.INPORTB(CRTC_INDEX + 1) | 0x40);
+    }
+
+    private static void VL_ClearVideo(int color) {
+        // TODO: Port VL_ClearVideo body from ID_VL.C.
     }
 
     private static void VGAMAPMASK(int mask) {

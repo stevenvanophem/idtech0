@@ -37,6 +37,23 @@ public final class C_RUNTIME {
     }
 
     /**
+     * C-library style {@code isupper} (ASCII-focused).
+     */
+    public static boolean isupper(char c) {
+        return c >= 'A' && c <= 'Z';
+    }
+
+    /**
+     * C-library style {@code tolower} (ASCII-focused).
+     */
+    public static char tolower(char c) {
+        if (isupper(c)) {
+            return (char) (c + ('a' - 'A'));
+        }
+        return c;
+    }
+
+    /**
      * C-style case-insensitive string compare (ASCII-focused), similar to {@code stricmp}.
      * Returns 0 when equal, negative/positive on lexical difference.
      */
@@ -58,9 +75,6 @@ public final class C_RUNTIME {
     }
 
     private static char toLowerAscii(char c) {
-        if (c >= 'A' && c <= 'Z') {
-            return (char) (c + ('a' - 'A'));
-        }
-        return c;
+        return tolower(c);
     }
 }

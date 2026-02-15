@@ -25,35 +25,44 @@ public final class ID_US {
      * - matches by prefix against each option string
      */
     public static int US_CheckParm(String parm, String[] strings) {
-        String normalizedParm = skipNonAlpha(parm);
+        char cp;
+        char cs;
         int i;
-        for (i = 0; i < strings.length; i++) {
-            String s = strings[i];
-            if (s == null || s.isEmpty()) {
+        int pIndex;
+        int sIndex;
+        int parmIndex;
+
+        parmIndex = 0;
+        while (parmIndex < parm.length() && !C_RUNTIME.isalpha(parm.charAt(parmIndex))) {
+            if (parmIndex >= parm.length()) {
                 break;
             }
-            if (startsWithIgnoreCase(normalizedParm, s)) {
-                return i;
+            parmIndex++;
+        }
+
+        for (i = 0; i < strings.length && strings[i] != null && !strings[i].isEmpty(); i++) {
+            sIndex = 0;
+            pIndex = 0;
+            cs = 0;
+            cp = 0;
+
+            for (; cs == cp; ) {
+                cs = sIndex < strings[i].length() ? strings[i].charAt(sIndex++) : 0;
+                if (cs == 0) {
+                    return i;
+                }
+                cp = (parmIndex + pIndex) < parm.length() ? parm.charAt(parmIndex + pIndex) : 0;
+                pIndex++;
+
+                if (C_RUNTIME.isupper(cs)) {
+                    cs = C_RUNTIME.tolower(cs);
+                }
+                if (C_RUNTIME.isupper(cp)) {
+                    cp = C_RUNTIME.tolower(cp);
+                }
             }
         }
         return -1;
     }
 
-    private static String skipNonAlpha(String value) {
-        if (value == null) {
-            return "";
-        }
-        int idx = 0;
-        while (idx < value.length() && !C_RUNTIME.isalpha(value.charAt(idx))) {
-            idx++;
-        }
-        return value.substring(idx);
-    }
-
-    private static boolean startsWithIgnoreCase(String source, String prefix) {
-        if (source.length() < prefix.length()) {
-            return false;
-        }
-        return source.regionMatches(true, 0, prefix, 0, prefix.length());
-    }
 }
