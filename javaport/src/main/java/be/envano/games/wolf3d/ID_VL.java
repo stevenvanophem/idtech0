@@ -367,6 +367,64 @@ public final class ID_VL {
     }
 
     /**
+     * Correlates to {@code original/WOLFSRC/ID_VL.C:598} ({@code void VL_Hlin (unsigned x, unsigned y, unsigned width, unsigned color)}).
+     */
+    public static void VL_Hlin(int x, int y, int width, int color) {
+        int xbyte;
+        int dest;
+        int leftmask;
+        int rightmask;
+        int midbytes;
+
+        xbyte = x >> 2;
+        leftmask = leftmasks[x & 3] & 0xff;
+        rightmask = rightmasks[(x + width - 1) & 3] & 0xff;
+        midbytes = ((x + width + 3) >> 2) - xbyte - 2;
+
+        dest = bufferofs + ylookup[y] + xbyte;
+
+        if (midbytes < 0) {
+            ID_VL_H.VGAMAPMASK(leftmask & rightmask);
+            ASM_RUNTIME.WRITE_VIDEO_BYTE(screenseg, dest, color);
+            ID_VL_H.VGAMAPMASK(15);
+            return;
+        }
+
+        ID_VL_H.VGAMAPMASK(leftmask);
+        ASM_RUNTIME.WRITE_VIDEO_BYTE(screenseg, dest, color);
+        dest++;
+
+        ID_VL_H.VGAMAPMASK(15);
+        ASM_RUNTIME.FILL_VIDEO_BYTES(screenseg, dest, color, midbytes);
+        dest += midbytes;
+
+        ID_VL_H.VGAMAPMASK(rightmask);
+        ASM_RUNTIME.WRITE_VIDEO_BYTE(screenseg, dest, color);
+
+        ID_VL_H.VGAMAPMASK(15);
+    }
+
+    /**
+     * Correlates to {@code original/WOLFSRC/ID_VL.C:643} ({@code void VL_Vlin (int x, int y, int height, int color)}).
+     */
+    public static void VL_Vlin(int x, int y, int height, int color) {
+        int dest;
+        int mask;
+
+        mask = pixmasks[x & 3] & 0xff;
+        ID_VL_H.VGAMAPMASK(mask);
+
+        dest = bufferofs + ylookup[y] + (x >> 2);
+
+        while (height-- != 0) {
+            ASM_RUNTIME.WRITE_VIDEO_BYTE(screenseg, dest, color);
+            dest += linewidth;
+        }
+
+        ID_VL_H.VGAMAPMASK(15);
+    }
+
+    /**
      * Correlates to {@code original/WOLFSRC/ID_VL_A.ASM:30} ({@code PROC VL_WaitVBL num:WORD}).
      */
     public static void VL_WaitVBL(int vbls) {

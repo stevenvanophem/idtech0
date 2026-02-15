@@ -279,4 +279,11 @@ public final class ASM_RUNTIME {
     public static void WRITE_VIDEO_BYTE(int segment, int offset, int value) {
         // TODO: Replace with platform/backend behavior where applicable.
     }
+
+    /**
+     * Assembly intent bridge for filling contiguous bytes in planar video memory.
+     */
+    public static void FILL_VIDEO_BYTES(int segment, int offset, int value, int count) {
+        // TODO: Replace with platform/backend behavior where applicable.
+    }
 }
