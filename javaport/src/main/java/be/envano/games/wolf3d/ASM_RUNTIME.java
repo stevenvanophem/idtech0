@@ -75,13 +75,20 @@ public final class ASM_RUNTIME {
     }
 
     /**
-     * Assembly/BIOS intent bridge for {@code int 0x10}.
+     * Assembly/BIOS intent bridge for {@code int <number>}.
      * <p>
      * Correlates to inline asm usage in {@code original/WOLFSRC/ID_VL.C}.
      */
-    public static void INT_10h() {
+    public static void INT(int number) {
         // TODO: Replace with platform backend behavior (FFM/native API mapping).
-        // Current intent: BIOS video service with AX function/mode selected by MOV_AX.
+        // Current intent: BIOS/interrupt service selected by interrupt number and registers.
+    }
+
+    /**
+     * Convenience wrapper for {@code int 0x10}.
+     */
+    public static void INT_10h() {
+        INT(0x10);
     }
 
     /**
@@ -89,7 +96,7 @@ public final class ASM_RUNTIME {
      */
     public static void BIOS_SetVideoMode(int mode) {
         MOV_AX(mode);
-        INT_10h();
+        INT(0x10);
     }
 
     /**

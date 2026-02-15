@@ -56,7 +56,7 @@ public final class ID_VL {
      */
     public static void VL_SetVGAPlaneMode() {
         ASM_RUNTIME.MOV_AX(0x13);
-        ASM_RUNTIME.INT_10h();
+        ASM_RUNTIME.INT(0x10);
         VL_DePlaneVGA();
         VGAMAPMASK(15);
         VL_SetLineWidth(40);
@@ -67,7 +67,7 @@ public final class ID_VL {
      */
     public static void VL_SetTextMode() {
         ASM_RUNTIME.MOV_AX(0x03);
-        ASM_RUNTIME.INT_10h();
+        ASM_RUNTIME.INT(0x10);
     }
 
     private static int VL_VideoID() {
