@@ -2,7 +2,27 @@ package be.envano.games.wolf3d;
 
 public final class ID_SD {
 
+    /**
+     * Correlates to {@code original/WOLFSRC/ID_SD.C:77} ({@code longword TimeCount;}).
+     */
+    private static long TimeCount;
+
     private ID_SD() {
+    }
+
+    public static long GetTimeCount() {
+        return TimeCount;
+    }
+
+    public static void SetTimeCount(long value) {
+        TimeCount = value;
+    }
+
+    /**
+     * Correlates to callsites using {@code EXTRN TimeCount:WORD} in asm modules.
+     */
+    public static int GetTimeCountWord() {
+        return (int) (TimeCount & 0xffffL);
     }
 
     // Correlates to: original/WOLFSRC/ID_SD.C (SD_Startup)

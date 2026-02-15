@@ -2,7 +2,6 @@ package be.envano.games.wolf3d;
 
 public final class ID_VL_A {
 
-    private static int TimeCount;
     private static final int MDA = 1;
     private static final int CGA = 2;
     private static final int EGA = 3;
@@ -112,8 +111,7 @@ public final class ID_VL_A {
         int cx;
         int al;
 
-        cx = TimeCount;
-        cx += 2;
+        cx = (ID_SD.GetTimeCountWord() + 2) & 0xffff;
 
         while ((ASM_RUNTIME.INPORTB(ID_VL_H.STATUS_REGISTER_1) & 1) != 0) {
             // waitdisplay
@@ -123,7 +121,7 @@ public final class ID_VL_A {
             ASM_RUNTIME.STI();
             ASM_RUNTIME.CLI();
 
-            if (TimeCount >= cx) {
+            if (UnsignedWordGte(ID_SD.GetTimeCountWord(), cx)) {
                 break;
             }
 
@@ -279,6 +277,10 @@ public final class ID_VL_A {
             state.display1Type = 0;
             state.monoFlag = true;
         }
+    }
+
+    private static boolean UnsignedWordGte(int left, int right) {
+        return Integer.compareUnsigned(left & 0xffff, right & 0xffff) >= 0;
     }
 
     private static void FindEGA(VideoDetectState state) {
