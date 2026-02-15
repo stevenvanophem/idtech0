@@ -3,9 +3,12 @@ package be.envano.games.wolf3d;
 public final class ASM_RUNTIME {
 
     private static int AX;
+    private static int BX;
     private static int DX;
     private static int AL;
     private static int AH;
+    private static int BL;
+    private static int BH;
     private static int ES;
     private static int DS;
     private static int SS;
@@ -62,6 +65,14 @@ public final class ASM_RUNTIME {
     public static void MOV_AH(int value) {
         AH = value & 0xff;
         AX = (AH << 8) | AL;
+    }
+
+    /**
+     * Assembly intent bridge for {@code mov bh,<value>}.
+     */
+    public static void MOV_BH(int value) {
+        BH = value & 0xff;
+        BX = (BH << 8) | BL;
     }
 
     /**
@@ -260,5 +271,12 @@ public final class ASM_RUNTIME {
      */
     public static void MOV_DS_AX() {
         DS = AX & 0xffff;
+    }
+
+    /**
+     * Assembly intent bridge for writing a byte to planar video memory.
+     */
+    public static void WRITE_VIDEO_BYTE(int segment, int offset, int value) {
+        // TODO: Replace with platform/backend behavior where applicable.
     }
 }

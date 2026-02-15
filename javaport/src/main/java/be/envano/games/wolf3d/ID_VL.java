@@ -5,12 +5,20 @@ import java.util.Arrays;
 public final class ID_VL {
 
     private static final String[] ParmStrings = {"HIDDENCARD", ""};
+    private static int bufferofs;
+    private static int displayofs;
+    private static int pelpan;
+    private static int screenseg = ID_VL_H.SCREENSEG;
     private static int linewidth;
     private static final int[] ylookup = new int[ID_VL_H.MAXSCANLINES];
     private static boolean fastpalette;
     private static final byte[] palette1 = new byte[256 * 3];
     private static final byte[] palette2 = new byte[256 * 3];
     private static boolean screenfaded;
+    private static int bordercolor;
+    private static final byte[] pixmasks = {1, 2, 4, 8};
+    private static final byte[] leftmasks = {15, 14, 12, 8};
+    private static final byte[] rightmasks = {1, 3, 7, 15};
 
     private ID_VL() {
     }
@@ -333,6 +341,29 @@ public final class ID_VL {
 
         VL_SetPalette(palette);
         screenfaded = false;
+    }
+
+    /**
+     * Correlates to {@code original/WOLFSRC/ID_VL.C:558} ({@code void VL_ColorBorder (int color)}).
+     */
+    public static void VL_ColorBorder(int color) {
+        ASM_RUNTIME.MOV_AH(0x10);
+        ASM_RUNTIME.MOV_AL(1);
+        ASM_RUNTIME.MOV_BH(color);
+        ASM_RUNTIME.INT(0x10);
+        bordercolor = color;
+    }
+
+    /**
+     * Correlates to {@code original/WOLFSRC/ID_VL.C:583} ({@code void VL_Plot (int x, int y, int color)}).
+     */
+    public static void VL_Plot(int x, int y, int color) {
+        int mask;
+
+        mask = pixmasks[x & 3] & 0xff;
+        ID_VL_H.VGAMAPMASK(mask);
+        ASM_RUNTIME.WRITE_VIDEO_BYTE(screenseg, bufferofs + (ylookup[y] + (x >> 2)), color);
+        ID_VL_H.VGAMAPMASK(15);
     }
 
     /**
