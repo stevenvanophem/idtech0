@@ -14,6 +14,20 @@ public final class ASM_RUNTIME {
     }
 
     /**
+     * Assembly intent bridge for {@code cli}.
+     */
+    public static void CLI() {
+        // TODO: Platform/backend interrupt-disable intent if needed.
+    }
+
+    /**
+     * Assembly intent bridge for {@code sti}.
+     */
+    public static void STI() {
+        // TODO: Platform/backend interrupt-enable intent if needed.
+    }
+
+    /**
      * Assembly intent bridge for {@code mov ax,<value>}.
      */
     public static void MOV_AX(int value) {

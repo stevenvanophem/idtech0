@@ -58,7 +58,7 @@ public final class ID_VL {
         ASM_RUNTIME.MOV_AX(0x13);
         ASM_RUNTIME.INT(0x10);
         VL_DePlaneVGA();
-        VGAMAPMASK(15);
+        ID_VL_H.VGAMAPMASK(15);
         VL_SetLineWidth(40);
     }
 
@@ -138,10 +138,6 @@ public final class ID_VL {
         ASM_RUNTIME.MOV_CX(0x8000);
         ASM_RUNTIME.XOR_DI_DI();
         ASM_RUNTIME.REP_STOSW();
-    }
-
-    private static void VGAMAPMASK(int mask) {
-        // TODO: Port VGA map-mask register write.
     }
 
     private static void VL_SetLineWidth(int width) {
