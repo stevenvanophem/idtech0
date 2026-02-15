@@ -25,6 +25,10 @@ public final class ID_SD {
         return (int) (TimeCount & 0xffffL);
     }
 
+    public static void AdvanceTimeCount(long delta) {
+        TimeCount += delta;
+    }
+
     // Correlates to: original/WOLFSRC/ID_SD.C (SD_Startup)
     public static void SD_Startup() {
         // Correlates to original/WOLFSRC/ID_SD.C:1922 (LocalTime = TimeCount = alTimeCount = 0;).

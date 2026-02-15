@@ -1,5 +1,8 @@
 package be.envano.games.wolf3d;
 
+import java.io.IOException;
+import java.nio.file.Paths;
+
 public final class WL_MAIN {
 
     private static final String[] JHParmStrings = {"no386", ""};
@@ -14,10 +17,31 @@ public final class WL_MAIN {
     private static final int TILEWIDTH = 4;
     private static final int PAGE1START = 0;
     private static final int PAGE2START = 0;
+    private static final int INTROSONG = 0;
+    private static final int TITLEPIC = 0;
+    private static final int CREDITSPIC = 0;
+    private static final int TickBase = 70;
+    private static final int ex_abort = 1;
+    private static final String[] DemoParmStrings = {"baby", "easy", "normal", "hard", ""};
+    private static final long FOCALLENGTH = 0x5700L;
+    private static final int STATUSLINES = 40;
+    private static final double HEIGHTRATIO = 0.50;
 
     private static boolean IsA386;
+    private static boolean startgame;
+    private static boolean loadedgame;
     private static boolean virtualreality;
     private static boolean NoWait;
+    private static int WindowX;
+    private static int WindowW;
+    private static int PrintY;
+    private static int fontcolor;
+    private static int backcolor;
+    private static int screenofs;
+    private static int viewwidth;
+    private static int viewheight;
+    private static int centerx;
+    private static int shootdelta;
     private static int viewsize = 15;
     private static int displayofs;
     private static int bufferofs;
@@ -29,6 +53,15 @@ public final class WL_MAIN {
     private static final int[] blockstarts = new int[UPDATEWIDE * UPDATEHIGH];
     private static final byte[] update = new byte[UPDATEWIDE * UPDATEHIGH];
     private static int updateptr;
+    private static int LastDemo;
+    private static int playstate;
+    private static boolean tedlevel;
+    private static int tedlevelnum;
+    private static boolean wroteFrame;
+    // Correlates to original/WOLFSRC/ID_HEADS.H extern signon/introscn linkage.
+    private static final byte[] introscn = new byte[320 * 200];
+    // Correlates to original/WOLFSRC/ID_VH.H extern gamepal.
+    private static final byte[] gamepal = new byte[256 * 3];
 
     private WL_MAIN() {
     }
@@ -137,8 +170,89 @@ public final class WL_MAIN {
         }
     }
 
+    /**
+     * Correlates to {@code original/WOLFSRC/WL_MAIN.C:1411} ({@code void DemoLoop(void)}).
+     */
     public static void DemoLoop() {
-        throw new UnsupportedOperationException("TODO: Port DemoLoop from WL_MAIN.C");
+        int i;
+        int level;
+
+        if (tedlevel) {
+            NoWait = true;
+            NewGame(1, 0);
+
+            for (i = 1; i < C_RUNTIME.argc(); i++) {
+                level = ID_US.US_CheckParm(C_RUNTIME.argv(i), DemoParmStrings);
+                if (level != -1) {
+                    SetGameDifficulty(level);
+                    break;
+                }
+            }
+
+            SetGameEpisodeAndMapFromTed(tedlevelnum);
+            GameLoop();
+            Quit(null);
+            return;
+        }
+
+        if (!NoWait) {
+            NonShareware();
+        }
+
+        StartCPMusic(INTROSONG);
+
+        if (!NoWait) {
+            PG13();
+        }
+
+        while (1 != 0) {
+            while (!NoWait) {
+                MM_SortMem();
+                CA_CacheScreen(TITLEPIC);
+                VW_UpdateScreen();
+                ID_VL.VL_FadeIn(0, 255, gamepal, 30);
+
+                if (IN_UserInput(TickBase * 15)) {
+                    break;
+                }
+                ID_VL.VL_FadeOut(0, 255, 0, 0, 0, 30);
+
+                CA_CacheScreen(CREDITSPIC);
+                VW_UpdateScreen();
+                ID_VL.VL_FadeIn(0, 255, gamepal, 30);
+                if (IN_UserInput(TickBase * 10)) {
+                    break;
+                }
+                ID_VL.VL_FadeOut(0, 255, 0, 0, 0, 30);
+
+                DrawHighScores();
+                VW_UpdateScreen();
+                ID_VL.VL_FadeIn(0, 255, gamepal, 30);
+                if (IN_UserInput(TickBase * 10)) {
+                    break;
+                }
+
+                PlayDemo((LastDemo++) % 4);
+
+                if (playstate == ex_abort) {
+                    break;
+                }
+                StartCPMusic(INTROSONG);
+            }
+
+            ID_VL.VL_FadeOut(0, 255, 0, 0, 0, 30);
+            if (Keyboard(15) && MS_CheckParm("goobers")) {
+                RecordDemo();
+            } else {
+                US_ControlPanel(0);
+            }
+
+            if (startgame || loadedgame) {
+                GameLoop();
+                ID_VL.VL_FadeOut(0, 255, 0, 0, 0, 30);
+                StartCPMusic(INTROSONG);
+            }
+        }
     }
 
     // Correlates to: original/WOLFSRC/WL_MAIN.C:557 (void ShutdownId(void))
@@ -182,7 +296,28 @@ public final class WL_MAIN {
         return false;
     }
 
+    /**
+     * Correlates to {@code original/WOLFSRC/WL_MAIN.C:727} ({@code void SignonScreen(void)}).
+     */
     private static void SignonScreen() {
+        int segstart;
+        int seglength;
+
+        ID_VL.VL_SetVGAPlaneMode();
+        ID_VL.VL_TestPaletteSet();
+        ID_VL.VL_SetPalette(gamepal);
+
+        if (!virtualreality) {
+            ID_VH_H.VW_SetScreen(0x8000, 0);
+            ID_VH.VL_MungePic(introscn, 320, 200);
+            ID_VL.VL_MemToScreen(introscn, 320, 200, 0, 0);
+            ID_VH_H.VW_SetScreen(0, 0);
+        }
+
+        segstart = 0;
+        seglength = 64000 / 16;
+        // TODO: Port FP_SEG/FP_OFF linked-resource reclaim behavior.
+        MML_UseSpace(segstart, seglength);
     }
 
     private static void InitDigiMap() {
@@ -238,9 +373,77 @@ public final class WL_MAIN {
     }
 
     private static void IntroScreen() {
+        WL_MENU.IntroScreen(
+                mminfo_mainmem,
+                false, 0,
+                false, 0,
+                false,
+                false, false,
+                false,
+                false,
+                false
+        );
     }
 
     private static void CA_CacheGrChunk(int chunk) {
+    }
+
+    private static void CA_CacheScreen(int screen) {
+    }
+
+    private static void StartCPMusic(int music) {
+    }
+
+    private static void MM_SortMem() {
+    }
+
+    private static void VW_UpdateScreen() {
+        if (wroteFrame) {
+            return;
+        }
+        try {
+            ASM_RUNTIME.DEBUG_DUMP_MODEX_PPM(Paths.get("javaport", "target", "application-frame.ppm"),
+                    320, 200, 80, 0);
+            wroteFrame = true;
+        } catch (IOException ignored) {
+            // TODO: Route backend errors through existing debug/log path.
+        }
+    }
+
+    private static boolean IN_UserInput(int delay) {
+        return false;
+    }
+
+    private static void DrawHighScores() {
+    }
+
+    private static void PlayDemo(int index) {
+    }
+
+    private static void RecordDemo() {
+    }
+
+    private static void US_ControlPanel(int arg) {
+    }
+
+    private static void GameLoop() {
+    }
+
+    private static void NewGame(int difficulty, int episode) {
+    }
+
+    private static void SetGameDifficulty(int level) {
+        // TODO: Port gamestate difficulty assignment.
+    }
+
+    private static void SetGameEpisodeAndMapFromTed(int levelnum) {
+        // TODO: Port WL_MAIN.C tedlevel episode/map mapping.
+    }
+
+    private static void NonShareware() {
+    }
+
+    private static void PG13() {
     }
 
     private static void MM_SetLock() {
@@ -255,15 +458,116 @@ public final class WL_MAIN {
     private static void SetupWalls() {
     }
 
+    /**
+     * Correlates to {@code original/WOLFSRC/WL_MAIN.C:1309} ({@code void ShowViewSize(int width)}).
+     */
+    private static void ShowViewSize(int width) {
+        int oldwidth;
+        int oldheight;
+
+        oldwidth = viewwidth;
+        oldheight = viewheight;
+
+        viewwidth = width * 16;
+        viewheight = (int) (width * 16 * HEIGHTRATIO);
+        DrawPlayBorder();
+
+        viewheight = oldheight;
+        viewwidth = oldwidth;
+    }
+
+    /**
+     * Correlates to {@code original/WOLFSRC/WL_MAIN.C:1278}
+     * ({@code boolean SetViewSize(unsigned width, unsigned height)}).
+     */
+    private static boolean SetViewSize(int width, int height) {
+        viewwidth = width & ~15;
+        viewheight = height & ~1;
+        centerx = viewwidth / 2 - 1;
+        shootdelta = viewwidth / 10;
+        screenofs = ((200 - STATUSLINES - viewheight) / 2 * SCREENWIDTH + (320 - viewwidth) / 8);
+
+        CalcProjection(FOCALLENGTH);
+        SetupScaling(viewwidth * 1.5);
+        return true;
+    }
+
+    /**
+     * Correlates to {@code original/WOLFSRC/WL_MAIN.C:1325} ({@code void NewViewSize(int width)}).
+     */
     private static void NewViewSize(int size) {
+        CA_UpLevel();
+        MM_SortMem();
+        viewsize = size;
+        SetViewSize(size * 16, (int) (size * 16 * HEIGHTRATIO));
+        CA_DownLevel();
+    }
+
+    private static void CalcProjection(long focalLength) {
+    }
+
+    private static void SetupScaling(double view) {
+    }
+
+    private static void DrawPlayBorder() {
+    }
+
+    private static void CA_UpLevel() {
+    }
+
+    private static void CA_DownLevel() {
     }
 
     private static void InitRedShifts() {
     }
 
+    /**
+     * Correlates to {@code original/WOLFSRC/WL_MAIN.C:765} ({@code void FinishSignon(void)}).
+     */
     private static void FinishSignon() {
+        ID_VH_H.VW_Bar(0, 189, 300, 11, PEEKB_A000_0());
+        WindowX = 0;
+        WindowW = 320;
+        PrintY = 190;
+
+        SETFONTCOLOR(14, 4);
+        US_CPrint("Press a key");
+
+        if (!NoWait) {
+            IN_Ack();
+        }
+
+        ID_VH_H.VW_Bar(0, 189, 300, 11, PEEKB_A000_0());
+
+        PrintY = 190;
+        SETFONTCOLOR(10, 4);
+        US_CPrint("Working...");
+
+        SETFONTCOLOR(0, 15);
     }
 
     private static void VR_Interrupt() {
     }
+
+    private static int PEEKB_A000_0() {
+        return ASM_RUNTIME.DEBUG_READ_VRAM_PLANE_BYTE(0, 0);
+    }
+
+    private static void SETFONTCOLOR(int f, int b) {
+        fontcolor = f;
+        backcolor = b;
+    }
+
+    private static void US_CPrint(String s) {
+        // TODO: Port text rendering and windowed print behavior.
+    }
+
+    private static void IN_Ack() {
+        // TODO: Port input acknowledge/wait behavior.
+    }
+
+    private static void MML_UseSpace(int segstart, int seglength) {
+        // TODO: Port memory-manager free-space reclamation behavior.
+    }
+
 }

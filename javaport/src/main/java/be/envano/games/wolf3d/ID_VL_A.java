@@ -123,6 +123,8 @@ public final class ID_VL_A {
             ASM_RUNTIME.STI();
             ASM_RUNTIME.JMP_SHORT_2();
             ASM_RUNTIME.CLI();
+            // TODO: Remove once timer interrupt service advances TimeCount.
+            ID_SD.AdvanceTimeCount(1);
 
             if (UnsignedWordGte(ID_SD.GetTimeCountWord(), cx)) {
                 break;

@@ -1,9 +1,14 @@
 package be.envano.games.wolf3d;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 public final class ASM_RUNTIME {
 
     private static final byte[][] VRAM_PLANES = new byte[4][0x10000];
     private static final int[] PORT8 = new int[0x10000];
+    private static int STATUS_TICK;
     private static int AX;
     private static int BX;
     private static int DX;
@@ -234,7 +239,18 @@ public final class ASM_RUNTIME {
      * Assembly intent bridge for byte input from an I/O port ({@code inportb}).
      */
     public static int INPORTB(int port) {
-        return PORT8[port & 0xffff] & 0xff;
+        int p;
+
+        p = port & 0xffff;
+        if (p == ID_VL_H.STATUS_REGISTER_1) {
+            STATUS_TICK++;
+            if ((STATUS_TICK & 1) == 0) {
+                return 0x00;
+            }
+            return 0x08;
+        }
+
+        return PORT8[p] & 0xff;
     }
 
     /**
@@ -478,5 +494,43 @@ public final class ASM_RUNTIME {
      */
     public static int DEBUG_READ_PORT8(int port) {
         return PORT8[port & 0xffff] & 0xff;
+    }
+
+    /**
+     * Debug helper that writes a 4-plane Mode X style VRAM view to a binary PPM (P6) image.
+     */
+    public static void DEBUG_DUMP_MODEX_PPM(Path output, int width, int height, int lineWidthBytes, int pageOffset)
+            throws IOException {
+        byte[] header;
+        byte[] pixels;
+        int x;
+        int y;
+        int srcOffset;
+        int plane;
+        int index;
+        int p;
+
+        header = ("P6\n" + width + " " + height + "\n255\n").getBytes();
+        pixels = new byte[width * height * 3];
+        p = 0;
+
+        for (y = 0; y < height; y++) {
+            for (x = 0; x < width; x++) {
+                srcOffset = (pageOffset + y * lineWidthBytes + (x >> 2)) & 0xffff;
+                plane = x & 3;
+                index = VRAM_PLANES[plane][srcOffset] & 0xff;
+
+                // Temporary palette mapping: grayscale expansion for visual verification.
+                pixels[p++] = (byte) index;
+                pixels[p++] = (byte) index;
+                pixels[p++] = (byte) index;
+            }
+        }
+
+        Files.createDirectories(output.toAbsolutePath().getParent());
+        byte[] out = new byte[header.length + pixels.length];
+        System.arraycopy(header, 0, out, 0, header.length);
+        System.arraycopy(pixels, 0, out, header.length, pixels.length);
+        Files.write(output, out);
     }
 }

@@ -159,6 +159,13 @@ public final class ID_VL {
         }
     }
 
+    /**
+     * Public wrapper for header macro ownership parity (`VW_SetLineWidth` -> `VL_SetLineWidth`).
+     */
+    public static void VL_SetLineWidth_PUBLIC(int width) {
+        VL_SetLineWidth(width);
+    }
+
     static int GetLineWidthForAsm() {
         return linewidth;
     }
