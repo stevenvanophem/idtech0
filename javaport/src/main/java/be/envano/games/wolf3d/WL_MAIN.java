@@ -15,8 +15,6 @@ public final class WL_MAIN {
     private static final int PAGE1START = 0;
     private static final int PAGE2START = 0;
 
-    private static int _argc;
-    private static String[] _argv = new String[0];
     private static boolean IsA386;
     private static boolean virtualreality;
     private static boolean NoWait;
@@ -37,7 +35,7 @@ public final class WL_MAIN {
 
     // Correlates to: original/WOLFSRC/WL_MAIN.C:1586 (void main(void))
     public static void main(String[] args) {
-        setArgv(args == null ? new String[0] : args);
+        C_RUNTIME.setMainArgs(args == null ? new String[0] : args);
 
         WL_MENU.CheckForEpisodes();
         Patch386();
@@ -59,8 +57,8 @@ public final class WL_MAIN {
     public static void Patch386() {
         int i;
 
-        for (i = 1; i < _argc; i++) {
-            if (ID_US.US_CheckParm(_argv[i], JHParmStrings) == 0) {
+        for (i = 1; i < C_RUNTIME.argc(); i++) {
+            if (ID_US.US_CheckParm(C_RUNTIME.argv(i), JHParmStrings) == 0) {
                 IsA386 = false;
                 return;
             }
@@ -90,7 +88,7 @@ public final class WL_MAIN {
         ID_MM.MM_Startup();
         SignonScreen();
 
-        ID_VW.VW_Startup();
+        ID_VH_H.VW_Startup();
         ID_IN.IN_Startup();
         ID_PM.PM_Startup();
         ID_PM.PM_UnlockMainMem();
@@ -149,32 +147,13 @@ public final class WL_MAIN {
         ID_SD.SD_Shutdown();
         ID_PM.PM_Shutdown();
         ID_IN.IN_Shutdown();
-        ID_VW.VW_Shutdown();
+        ID_VH_H.VW_Shutdown();
         ID_CA.CA_Shutdown();
         ID_MM.MM_Shutdown();
     }
 
     public static void Quit(String error) {
         throw new IllegalStateException(error == null ? "Quit called" : error);
-    }
-
-    private static void setArgv(String[] javaArgs) {
-        String[] args = javaArgs == null ? new String[0] : javaArgs;
-        _argv = new String[args.length + 1];
-        _argv[0] = "java";
-        System.arraycopy(args, 0, _argv, 1, args.length);
-        _argc = _argv.length;
-    }
-
-    private static String skipNonAlpha(String value) {
-        if (value == null) {
-            return "";
-        }
-        int idx = 0;
-        while (idx < value.length() && !Character.isAlphabetic(value.charAt(idx))) {
-            idx++;
-        }
-        return value.substring(idx);
     }
 
     private static boolean CheckIs386() {
@@ -189,9 +168,14 @@ public final class WL_MAIN {
     // Correlates to: original/WOLFSRC/WL_MAIN.C:814 (boolean MS_CheckParm(char far *check))
     private static boolean MS_CheckParm(String check) {
         int i;
-        for (i = 1; i < _argc; i++) {
-            String parm = skipNonAlpha(_argv[i]);
-            if (check.equalsIgnoreCase(parm)) {
+        String parm;
+        for (i = 1; i < C_RUNTIME.argc(); i++) {
+            parm = C_RUNTIME.argv(i);
+
+            while (!parm.isEmpty() && !C_RUNTIME.isalpha(parm.charAt(0))) {
+                parm = parm.substring(1);
+            }
+            if (C_RUNTIME.stricmp(check, parm) == 0) {
                 return true;
             }
         }

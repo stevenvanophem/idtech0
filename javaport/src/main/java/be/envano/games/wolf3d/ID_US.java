@@ -44,7 +44,7 @@ public final class ID_US {
             return "";
         }
         int idx = 0;
-        while (idx < value.length() && !Character.isAlphabetic(value.charAt(idx))) {
+        while (idx < value.length() && !C_RUNTIME.isalpha(value.charAt(idx))) {
             idx++;
         }
         return value.substring(idx);
