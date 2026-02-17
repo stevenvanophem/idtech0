@@ -27,6 +27,7 @@ public final class ID_SDL {
     private static MethodHandle SDL_CreateWindow;
     private static MethodHandle SDL_PollEvent;
     private static MethodHandle SDL_Delay;
+    private static MethodHandle SDL_GetError;
 
     private ID_SDL() {
     }
@@ -38,16 +39,16 @@ public final class ID_SDL {
 
         ensureSdlApiLoaded();
         try {
-            int initResult = (int) SDL_Init.invokeExact(SDL_INIT_VIDEO);
-            if (initResult != 0) {
-                throw new IllegalStateException("SDL_Init failed");
+            boolean initOk = (boolean) SDL_Init.invokeExact((long) SDL_INIT_VIDEO);
+            if (!initOk) {
+                throw new IllegalStateException("SDL_Init failed: " + getSdlError());
             }
 
             try (Arena arena = Arena.ofConfined()) {
                 MemorySegment title = arena.allocateFrom("Wolf3D Java Port");
-                MemorySegment window = (MemorySegment) SDL_CreateWindow.invokeExact(title, 640, 400, 0);
+                MemorySegment window = (MemorySegment) SDL_CreateWindow.invokeExact(title, 640, 400, 0L);
                 if (window.address() == 0L) {
-                    throw new IllegalStateException("SDL_CreateWindow failed");
+                    throw new IllegalStateException("SDL_CreateWindow failed: " + getSdlError());
                 }
                 sdlWindow = window;
             }
@@ -66,8 +67,8 @@ public final class ID_SDL {
         ensureSdlApiLoaded();
         try (Arena arena = Arena.ofConfined()) {
             MemorySegment event = arena.allocate(128);
-            int hasEvent = (int) SDL_PollEvent.invokeExact(event);
-            if (hasEvent != 0) {
+            boolean hasEvent = (boolean) SDL_PollEvent.invokeExact(event);
+            if (hasEvent) {
                 int type = event.get(ValueLayout.JAVA_INT, 0);
                 if (type == SDL_EVENT_QUIT) {
                     return true;
@@ -103,7 +104,7 @@ public final class ID_SDL {
         try {
             SDL_Init = sdlLinker.downcallHandle(
                     sdlLookup.find("SDL_Init").orElseThrow(),
-                    FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.JAVA_INT)
+                    FunctionDescriptor.of(ValueLayout.JAVA_BOOLEAN, ValueLayout.JAVA_LONG)
             );
             SDL_CreateWindow = sdlLinker.downcallHandle(
                     sdlLookup.find("SDL_CreateWindow").orElseThrow(),
@@ -112,19 +113,35 @@ public final class ID_SDL {
                             ValueLayout.ADDRESS,
                             ValueLayout.JAVA_INT,
                             ValueLayout.JAVA_INT,
-                            ValueLayout.JAVA_INT
+                            ValueLayout.JAVA_LONG
                     )
             );
             SDL_PollEvent = sdlLinker.downcallHandle(
                     sdlLookup.find("SDL_PollEvent").orElseThrow(),
-                    FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS)
+                    FunctionDescriptor.of(ValueLayout.JAVA_BOOLEAN, ValueLayout.ADDRESS)
             );
             SDL_Delay = sdlLinker.downcallHandle(
                     sdlLookup.find("SDL_Delay").orElseThrow(),
                     FunctionDescriptor.ofVoid(ValueLayout.JAVA_INT)
             );
+            SDL_GetError = sdlLinker.downcallHandle(
+                    sdlLookup.find("SDL_GetError").orElseThrow(),
+                    FunctionDescriptor.of(ValueLayout.ADDRESS)
+            );
         } catch (Throwable t) {
             throw new RuntimeException("Failed to bind SDL3 symbols via FFM", t);
+        }
+    }
+
+    private static String getSdlError() {
+        try {
+            MemorySegment ptr = (MemorySegment) SDL_GetError.invokeExact();
+            if (ptr == null || ptr.address() == 0L) {
+                return "<no SDL error>";
+            }
+            return ptr.reinterpret(Long.MAX_VALUE).getString(0);
+        } catch (Throwable t) {
+            return "<SDL_GetError unavailable: " + t.getClass().getSimpleName() + ">";
         }
     }
 }
