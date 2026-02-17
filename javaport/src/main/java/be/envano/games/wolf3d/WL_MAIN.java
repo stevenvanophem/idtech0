@@ -64,7 +64,8 @@ public final class WL_MAIN {
         // PM_Startup();
         // PM_UnlockMainMem();
         // SD_Startup();
-        // CA_Startup();
+        // C call site: original/WOLFSRC/WL_MAIN.C:1164
+        ID_CA.CA_Startup();
         // US_Startup();
         // ...
     }
