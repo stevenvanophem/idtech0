@@ -1,0 +1,111 @@
+package be.envano.games.wolf3d;
+
+/**
+ * Port scaffold for original/WOLFSRC/WL_MAIN.C.
+ */
+public final class WL_MAIN {
+
+    // C source: original/WOLFSRC/WL_MAIN.C:67
+    static boolean virtualreality;
+
+    private WL_MAIN() {
+    }
+
+    // C source: original/WOLFSRC/WL_MAIN.C:1586
+    public static void main(String[] args) {
+        C_RUNTIME.initArgv(args);
+        // C call site: original/WOLFSRC/WL_MAIN.C:1606
+        CheckForEpisodes();
+        // C call site: original/WOLFSRC/WL_MAIN.C:1608
+        Patch386();
+        // C call site: original/WOLFSRC/WL_MAIN.C:1610
+        InitGame();
+        // C call site: original/WOLFSRC/WL_MAIN.C:1612
+        DemoLoop();
+        // C call site: original/WOLFSRC/WL_MAIN.C:1614
+        Quit("Demo loop exited???");
+    }
+
+    // C source: original/WOLFSRC/WL_MAIN.C:1606
+    static void CheckForEpisodes() {
+        // Traversal placeholder: skipped branch for now; tracked in .idea/ai/ledger.md.
+    }
+
+    // C source: original/WOLFSRC/WL_MAIN.C:241
+    static void Patch386() {
+        // Traversal placeholder: skipped branch for now; tracked in .idea/ai/ledger.md.
+    }
+
+    // C source: original/WOLFSRC/WL_MAIN.C:1145
+    static void InitGame() {
+        // C source control flow: original/WOLFSRC/WL_MAIN.C:1150-1153
+        // C call site: original/WOLFSRC/WL_MAIN.C:1150
+        if (MS_CheckParm("virtual")) {
+            // C line: original/WOLFSRC/WL_MAIN.C:1151
+            virtualreality = true;
+        } else {
+            // C line: original/WOLFSRC/WL_MAIN.C:1153
+            virtualreality = false;
+        }
+
+        // Window milestone path only:
+        // MM_Startup();
+        // C call site: original/WOLFSRC/WL_MAIN.C:1157
+        SignonScreen();
+        // C call site: original/WOLFSRC/WL_MAIN.C:1159 (VW_Startup -> VL_Startup)
+        VW_Startup();
+
+        // Deferred until after first window milestone:
+        // IN_Startup();
+        // PM_Startup();
+        // PM_UnlockMainMem();
+        // SD_Startup();
+        // CA_Startup();
+        // US_Startup();
+        // ...
+    }
+
+    // C source: original/WOLFSRC/WL_MAIN.C:1411
+    static void DemoLoop() {
+        throw new UnsupportedOperationException("TODO port WL_MAIN.C::DemoLoop");
+    }
+
+    // C source: original/WOLFSRC/WL_MAIN.C:1346
+    static void Quit(String error) {
+        throw new UnsupportedOperationException("TODO port WL_MAIN.C::Quit");
+    }
+
+    // C source: original/WOLFSRC/WL_MAIN.C:727
+    static void SignonScreen() {
+        throw new UnsupportedOperationException("TODO port WL_MAIN.C::SignonScreen");
+    }
+
+    // C source: original/WOLFSRC/ID_VH.H:96 (VW_Startup -> VL_Startup)
+    static void VW_Startup() {
+        throw new UnsupportedOperationException("TODO port ID_VL.C::VL_Startup");
+    }
+
+    // C source: original/WOLFSRC/WL_MAIN.C:819
+    static boolean MS_CheckParm(String check) {
+        int i;
+        String parm;
+
+        for (i = 1; i < C_RUNTIME._argc; i++) {
+            parm = C_RUNTIME._argv[i];
+            int p = 0;
+
+            // C lines: original/WOLFSRC/WL_MAIN.C:827-830
+            while (p < parm.length() && !Character.isLetter(parm.charAt(p))) {
+                p++;
+            }
+
+            // C line: original/WOLFSRC/WL_MAIN.C:832
+            if (parm.substring(p).equalsIgnoreCase(check)) {
+                return true;
+            }
+        }
+
+        // C line: original/WOLFSRC/WL_MAIN.C:836
+        return false;
+    }
+}
