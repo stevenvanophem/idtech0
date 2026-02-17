@@ -82,7 +82,7 @@ public final class WL_MAIN {
     // C source: original/WOLFSRC/WL_MAIN.C:727
     static void SignonScreen() {
         // C call site: original/WOLFSRC/WL_MAIN.C:731
-        VL_SetVGAPlaneMode();
+        ID_VL.VL_SetVGAPlaneMode();
         // C call site: original/WOLFSRC/WL_MAIN.C:732
         VL_TestPaletteSet();
         // C call site: original/WOLFSRC/WL_MAIN.C:733
@@ -131,11 +131,6 @@ public final class WL_MAIN {
 
         // C line: original/WOLFSRC/WL_MAIN.C:836
         return false;
-    }
-
-    // C source: original/WOLFSRC/ID_VL.C:115
-    static void VL_SetVGAPlaneMode() {
-        throw new UnsupportedOperationException("TODO port ID_VL.C::VL_SetVGAPlaneMode");
     }
 
     // C source: original/WOLFSRC/ID_VL.C:546
