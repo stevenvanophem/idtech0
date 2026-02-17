@@ -141,7 +141,8 @@ public final class WL_MAIN {
 
     // C source: original/WOLFSRC/ID_VL.C:371
     static void VL_SetPalette(Object palette) {
-        throw new UnsupportedOperationException("TODO port ID_VL.C::VL_SetPalette");
+        // Deferred for window milestone: VGA DAC palette programming is not required to show an SDL window.
+        // See .idea/ai/ledger.md for deferred line tracking.
     }
 
     // C source: original/WOLFSRC/ID_VL.C:36 (called through VW macro layer from WL_MAIN.C)
