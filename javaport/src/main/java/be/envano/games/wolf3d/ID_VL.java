@@ -17,17 +17,12 @@ public final class ID_VL {
 
     // SDL_INIT_VIDEO
     private static final int SDL_INIT_VIDEO = 0x00000020;
-    // SDL event type constant
-    private static final int SDL_EVENT_QUIT = 0x100;
-
     private static boolean sdlVideoInitialized;
     private static MemorySegment sdlWindow = MemorySegment.NULL;
     private static SymbolLookup sdlLookup;
     private static Linker sdlLinker;
     private static MethodHandle SDL_Init;
     private static MethodHandle SDL_CreateWindow;
-    private static MethodHandle SDL_PollEvent;
-    private static MethodHandle SDL_Delay;
 
     private ID_VL() {
     }
@@ -66,30 +61,6 @@ public final class ID_VL {
         // C call site: original/WOLFSRC/ID_VL.C:122 -> VL_SetLineWidth(40)
     }
 
-    static boolean SDL_RunEventLoopTick() {
-        if (!sdlVideoInitialized || sdlWindow.address() == 0L) {
-            return true;
-        }
-
-        ensureSdlApiLoaded();
-        try (Arena arena = Arena.ofConfined()) {
-            // SDL_Event is larger than a few words; 128 bytes is sufficient for this milestone.
-            MemorySegment event = arena.allocate(128);
-            int hasEvent = (int) SDL_PollEvent.invokeExact(event);
-            if (hasEvent != 0) {
-                int type = event.get(ValueLayout.JAVA_INT, 0);
-                if (type == SDL_EVENT_QUIT) {
-                    return true;
-                }
-            } else {
-                SDL_Delay.invokeExact(16);
-            }
-            return false;
-        } catch (Throwable t) {
-            throw new RuntimeException("Failed while running SDL event loop via FFM", t);
-        }
-    }
-
     private static Path resolveSdl3DllPath() {
         Path p1 = Path.of("native", "windows-x64", "SDL3.dll");
         if (Files.exists(p1)) {
@@ -123,14 +94,6 @@ public final class ID_VL {
                             ValueLayout.JAVA_INT,
                             ValueLayout.JAVA_INT
                     )
-            );
-            SDL_PollEvent = sdlLinker.downcallHandle(
-                    sdlLookup.find("SDL_PollEvent").orElseThrow(),
-                    FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS)
-            );
-            SDL_Delay = sdlLinker.downcallHandle(
-                    sdlLookup.find("SDL_Delay").orElseThrow(),
-                    FunctionDescriptor.ofVoid(ValueLayout.JAVA_INT)
             );
         } catch (Throwable t) {
             throw new RuntimeException("Failed to bind SDL3 symbols via FFM", t);

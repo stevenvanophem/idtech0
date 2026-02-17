@@ -71,12 +71,8 @@ public final class WL_MAIN {
 
     // C source: original/WOLFSRC/WL_MAIN.C:1411
     static void DemoLoop() {
-        // C control-flow reference: original/WOLFSRC/WL_MAIN.C:1486
-        while (true) {
-            if (ID_VL.SDL_RunEventLoopTick()) {
-                break;
-            }
-        }
+        // Deferred for strict traversal sequencing.
+        // See .idea/ai/ledger.md for deferred line tracking.
     }
 
     // C source: original/WOLFSRC/WL_MAIN.C:1346
