@@ -71,12 +71,14 @@ public final class WL_MAIN {
 
     // C source: original/WOLFSRC/WL_MAIN.C:1411
     static void DemoLoop() {
-        throw new UnsupportedOperationException("TODO port WL_MAIN.C::DemoLoop");
+        // Deferred for window milestone.
+        // See .idea/ai/ledger.md for deferred line tracking.
     }
 
     // C source: original/WOLFSRC/WL_MAIN.C:1346
     static void Quit(String error) {
-        throw new UnsupportedOperationException("TODO port WL_MAIN.C::Quit");
+        // Deferred for window milestone.
+        // See .idea/ai/ledger.md for deferred line tracking.
     }
 
     // C source: original/WOLFSRC/WL_MAIN.C:727
@@ -106,7 +108,8 @@ public final class WL_MAIN {
 
     // C source: original/WOLFSRC/ID_VH.H:96 (VW_Startup -> VL_Startup)
     static void VW_Startup() {
-        throw new UnsupportedOperationException("TODO port ID_VL.C::VL_Startup");
+        // Deferred for window milestone: video-card checks are DOS/VGA specific.
+        // See .idea/ai/ledger.md for deferred line tracking.
     }
 
     // C source: original/WOLFSRC/WL_MAIN.C:819
@@ -153,11 +156,13 @@ public final class WL_MAIN {
 
     // C source call site: original/WOLFSRC/WL_MAIN.C:738
     static void VL_MungePic(Object pic, int width, int height) {
-        throw new UnsupportedOperationException("TODO port WL_MAIN.C signon prep (VL_MungePic)");
+        // Deferred for window milestone: picture format conversion is not required to open an SDL window.
+        // See .idea/ai/ledger.md for deferred line tracking.
     }
 
     // C source: original/WOLFSRC/ID_VL.C:791
     static void VL_MemToScreen(Object source, int width, int height, int x, int y) {
-        throw new UnsupportedOperationException("TODO port ID_VL.C::VL_MemToScreen");
+        // Deferred for window milestone: blit path is not required to open an SDL window.
+        // See .idea/ai/ledger.md for deferred line tracking.
     }
 }
