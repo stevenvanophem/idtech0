@@ -147,7 +147,8 @@ public final class WL_MAIN {
 
     // C source: original/WOLFSRC/ID_VL.C:36 (called through VW macro layer from WL_MAIN.C)
     static void VW_SetScreen(int crtc, int pelpan) {
-        throw new UnsupportedOperationException("TODO port ID_VL.C::VL_SetScreen");
+        // Deferred for window milestone: VGA page/panning register behavior is not required to show an SDL window.
+        // See .idea/ai/ledger.md for deferred line tracking.
     }
 
     // C source call site: original/WOLFSRC/WL_MAIN.C:738
