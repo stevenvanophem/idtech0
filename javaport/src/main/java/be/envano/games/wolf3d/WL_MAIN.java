@@ -71,8 +71,28 @@ public final class WL_MAIN {
 
     // C source: original/WOLFSRC/WL_MAIN.C:1411
     static void DemoLoop() {
-        // Deferred for strict traversal sequencing.
-        // See .idea/ai/ledger.md for deferred line tracking.
+        // Deferred branch block: original/WOLFSRC/WL_MAIN.C:1421-1443 (tedlevel launch path).
+        // Includes NewGame/US_CheckParm difficulty parsing/GameLoop/Quit(NULL).
+
+        // Deferred branch block: original/WOLFSRC/WL_MAIN.C:1454-1484 (pre-loop startup/UI flow).
+        // Includes NonShareware/CopyProtection/StartCPMusic/PG13.
+
+        // C control-flow reference: original/WOLFSRC/WL_MAIN.C:1486
+        while (true) {
+            // Deferred nested branch: original/WOLFSRC/WL_MAIN.C:1488-1546 (`while (!NoWait)` title/credits/highscores/demo cycle).
+            // Deferred branch: original/WOLFSRC/WL_MAIN.C:1548 (`VW_FadeOut()` after inner loop).
+            // Deferred branch block: original/WOLFSRC/WL_MAIN.C:1551-1557 (RecordDemo/US_ControlPanel selection).
+            // Deferred branch block: original/WOLFSRC/WL_MAIN.C:1559-1564 (`if (startgame || loadedgame)` -> GameLoop/fade/music).
+            // Platform replacement hook for deferred inner-loop behavior.
+            if (DemoLoop_WindowTick()) {
+                break;
+            }
+        }
+    }
+
+    // No direct C equivalent; replacement hook used while DemoLoop branches are deferred.
+    static boolean DemoLoop_WindowTick() {
+        return ID_VL.SDL_RunEventLoopTick();
     }
 
     // C source: original/WOLFSRC/WL_MAIN.C:1346
