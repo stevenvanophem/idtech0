@@ -7,6 +7,10 @@ public final class WL_MAIN {
 
     // C source: original/WOLFSRC/WL_MAIN.C:67
     static boolean virtualreality;
+    // C source usage: original/WOLFSRC/WL_MAIN.C:733
+    static final Object gamepal = new Object();
+    // C source usage: original/WOLFSRC/WL_MAIN.C:738-739
+    static final Object introscn = new Object();
 
     private WL_MAIN() {
     }
@@ -77,7 +81,27 @@ public final class WL_MAIN {
 
     // C source: original/WOLFSRC/WL_MAIN.C:727
     static void SignonScreen() {
-        throw new UnsupportedOperationException("TODO port WL_MAIN.C::SignonScreen");
+        // C call site: original/WOLFSRC/WL_MAIN.C:731
+        VL_SetVGAPlaneMode();
+        // C call site: original/WOLFSRC/WL_MAIN.C:732
+        VL_TestPaletteSet();
+        // C call site: original/WOLFSRC/WL_MAIN.C:733
+        VL_SetPalette(gamepal);
+
+        // C source control flow: original/WOLFSRC/WL_MAIN.C:735
+        if (!virtualreality) {
+            // C call site: original/WOLFSRC/WL_MAIN.C:737
+            VW_SetScreen(0x8000, 0);
+            // C call site: original/WOLFSRC/WL_MAIN.C:738
+            VL_MungePic(introscn, 320, 200);
+            // C call site: original/WOLFSRC/WL_MAIN.C:739
+            VL_MemToScreen(introscn, 320, 200, 0, 0);
+            // C call site: original/WOLFSRC/WL_MAIN.C:740
+            VW_SetScreen(0, 0);
+        }
+
+        // Deferred until after first window milestone:
+        // C lines: original/WOLFSRC/WL_MAIN.C:746-753 (signon memory reclaim via FP_SEG/FP_OFF/MML_UseSpace)
     }
 
     // C source: original/WOLFSRC/ID_VH.H:96 (VW_Startup -> VL_Startup)
@@ -107,5 +131,35 @@ public final class WL_MAIN {
 
         // C line: original/WOLFSRC/WL_MAIN.C:836
         return false;
+    }
+
+    // C source: original/WOLFSRC/ID_VL.C:115
+    static void VL_SetVGAPlaneMode() {
+        throw new UnsupportedOperationException("TODO port ID_VL.C::VL_SetVGAPlaneMode");
+    }
+
+    // C source: original/WOLFSRC/ID_VL.C:546
+    static void VL_TestPaletteSet() {
+        throw new UnsupportedOperationException("TODO port ID_VL.C::VL_TestPaletteSet");
+    }
+
+    // C source: original/WOLFSRC/ID_VL.C:371
+    static void VL_SetPalette(Object palette) {
+        throw new UnsupportedOperationException("TODO port ID_VL.C::VL_SetPalette");
+    }
+
+    // C source: original/WOLFSRC/ID_VL.C:36 (called through VW macro layer from WL_MAIN.C)
+    static void VW_SetScreen(int crtc, int pelpan) {
+        throw new UnsupportedOperationException("TODO port ID_VL.C::VL_SetScreen");
+    }
+
+    // C source call site: original/WOLFSRC/WL_MAIN.C:738
+    static void VL_MungePic(Object pic, int width, int height) {
+        throw new UnsupportedOperationException("TODO port WL_MAIN.C signon prep (VL_MungePic)");
+    }
+
+    // C source: original/WOLFSRC/ID_VL.C:791
+    static void VL_MemToScreen(Object source, int width, int height, int x, int y) {
+        throw new UnsupportedOperationException("TODO port ID_VL.C::VL_MemToScreen");
     }
 }
