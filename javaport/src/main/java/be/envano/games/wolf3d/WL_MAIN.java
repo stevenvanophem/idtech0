@@ -71,8 +71,12 @@ public final class WL_MAIN {
 
     // C source: original/WOLFSRC/WL_MAIN.C:1411
     static void DemoLoop() {
-        // Deferred for window milestone.
-        // See .idea/ai/ledger.md for deferred line tracking.
+        // C control-flow reference: original/WOLFSRC/WL_MAIN.C:1486
+        while (true) {
+            if (ID_VL.SDL_RunEventLoopTick()) {
+                break;
+            }
+        }
     }
 
     // C source: original/WOLFSRC/WL_MAIN.C:1346
